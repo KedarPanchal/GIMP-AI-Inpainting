@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import sys
 import gi
+import time
 
 gi.require_version("Gimp", "3.0")
 from gi.repository import Gimp
@@ -9,6 +10,8 @@ from gi.repository import GimpUi
 from gi.repository import GLib
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
+from gi.repository import Gio
+
 
 class AiIntegration(Gimp.PlugIn):
     def do_query_procedures(self):
@@ -35,14 +38,30 @@ class AiIntegration(Gimp.PlugIn):
         while True:
             response = dialog.run()
             if response == Gtk.ResponseType.OK:
-                dialog.destroy()
-                Gimp.message("OK Pressed!")
-                break
+                Gimp.Image.undo_group_start(image)
+
+                if Gimp.Selection.is_empty(image):
+                    dialog.destroy()
+                    Gimp.message("No selection found!")
+                    Gimp.Image.undo_group_end(image)
+
+                    return procedure.new_return_values(Gimp.PDBStatusType.CALLING_ERROR, GLib.Error(message="No Selection Found!"))
+                else:
+                    selection = Gimp.edit_copy(drawables)
+                    new_image = Gimp.edit_paste_as_new_image()
+                    fname = time.time()
+                    Gimp.file_save(Gimp.RunMode.GIMP_RUN_WITH_LAST_VALS, new_image, Gio.File.new_for_path(f"{fname}.png"), None)
+
+                    Gimp.Image.delete(new_image)
+                    Gimp.Image.undo_group_end(image)
+
+                    return procedure.new_return_values(Gimp.PDBStatusType.SUCCESS, GLib.Error())
+
             else:
                 dialog.destroy()
                 Gimp.message("CANCEL Pressed!")
-                dialog.destroy()
 
-        return procedure.new_return_values(Gimp.PDBStatusType.SUCCESS, GLib.Error())
+                return procedure.new_return_values(Gimp.PDBStatusType.CANCEL, GLib.Error())
+
 
 Gimp.main(AiIntegration.__gtype__, sys.argv)
