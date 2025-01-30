@@ -2,6 +2,11 @@
 import sys
 import gi
 import time
+import platform
+
+import torch
+import diffusers
+from PIL import Image
 
 gi.require_version("Gimp", "3.0")
 from gi.repository import Gimp
@@ -23,38 +28,66 @@ class AiIntegration(Gimp.PlugIn):
     def do_create_procedure(self, name):
         procedure = Gimp.ImageProcedure.new(self, name, Gimp.PDBProcType.PLUGIN, self.run, None)
         procedure.set_image_types("*")
-        procedure.set_menu_label("Flux 1.x generative AI integration in GIMP")
+        procedure.set_menu_label("Flux 1.x Inpainting")
         procedure.add_menu_path("<Image>/Filters/Render/")
         procedure.set_attribution("K Panchal", "K Panchal", "2024")
 
         return procedure
 
+    def img_scale(self, image):
+        tiny = min(image.size)
+
+        if tiny >= 768:
+            return 1
+        else:
+          return 768/tiny  
+
+    def inpaint(self):
+        pass
+
     def run(self, procedure, run_mode, image, drawables, config, run_data):
+        # Init UI
         GimpUi.init("ai-integration.py")
         dialog = GimpUi.Dialog(use_header_bar=True, title="AI Integration")
         dialog.add_button("_Cancel", Gtk.ResponseType.CANCEL)
         dialog.add_button("_OK", Gtk.ResponseType.OK)
 
+        # Add input for inpaint prompt
+        text_input_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
+        text_input_box.set_border_width(10)
+        prompt_label = Gtk.Label(label="Enter Prompt:")
+        prompt_entry = Gtk.Entry()
+        prompt_entry.set_placeholder_text("Enter prompt...")
+        text_input_box.pack_start(prompt_label, False, False, 0)
+        text_input_box.pack_start(prompt_entry, True, True, 0)
+
+        dialog.get_content_area().add(text_input_box)
+        dialog.show_all()
+
         while True:
             response = dialog.run()
             if response == Gtk.ResponseType.OK:
+                # Extract layer
                 Gimp.Image.undo_group_start(image)
-
+                # No selection :(
                 if Gimp.Selection.is_empty(image):
                     dialog.destroy()
                     Gimp.message("No selection found!")
                     Gimp.Image.undo_group_end(image)
 
                     return procedure.new_return_values(Gimp.PDBStatusType.CALLING_ERROR, GLib.Error(message="No Selection Found!"))
+                # Yay selection :)
                 else:
-                    selection = Gimp.edit_copy(drawables)
-                    new_image = Gimp.edit_paste_as_new_image()
+                    Gimp.Drawable.fill(drawables, Gimp.FillType.GIMP_FILL_WHITE)
+                    Gimp.Drawable.invert(drawables)
+                    Gimp.Drawable.fill(drawables, Gimp.FillType.GIMP_FILL_WHITE)
+                    Gimp.Selection.invert(image)
                     fname = time.time()
-                    Gimp.file_save(Gimp.RunMode.GIMP_RUN_WITH_LAST_VALS, new_image, Gio.File.new_for_path(f"{fname}.png"), None)
-
-                    Gimp.Image.delete(new_image)
+                    Gimp.file_save(Gimp.RunMode.NONINTERACTIVE, image, Gio.File.new_for_path(f"{fname}.png"), None)
+                    
                     Gimp.Image.undo_group_end(image)
 
+                    self.inpaint()
                     return procedure.new_return_values(Gimp.PDBStatusType.SUCCESS, GLib.Error())
 
             else:
