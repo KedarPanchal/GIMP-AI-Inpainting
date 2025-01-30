@@ -78,10 +78,11 @@ class AiIntegration(Gimp.PlugIn):
                     return procedure.new_return_values(Gimp.PDBStatusType.CALLING_ERROR, GLib.Error(message="No Selection Found!"))
                 # Yay selection :)
                 else:
-                    Gimp.Drawable.fill(drawables, Gimp.FillType.GIMP_FILL_WHITE)
-                    Gimp.Drawable.invert(drawables)
-                    Gimp.Drawable.fill(drawables, Gimp.FillType.GIMP_FILL_WHITE)
+                    drawable = drawables[0]
+                    Gimp.Drawable.edit_fill(drawable, Gimp.FillType.WHITE)
                     Gimp.Selection.invert(image)
+                    Gimp.Drawable.edit_fill(drawable, Gimp.FillType.WHITE)
+                    Gimp.Drawable.invert(drawable, False)
                     fname = time.time()
                     Gimp.file_save(Gimp.RunMode.NONINTERACTIVE, image, Gio.File.new_for_path(f"{fname}.png"), None)
                     
