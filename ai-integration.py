@@ -64,38 +64,38 @@ class AiIntegration(Gimp.PlugIn):
         dialog.get_content_area().add(text_input_box)
         dialog.show_all()
 
-        while True:
-            response = dialog.run()
-            if response == Gtk.ResponseType.OK:
-                # Extract layer
-                Gimp.Image.undo_group_start(image)
-                # No selection :(
-                if Gimp.Selection.is_empty(image):
-                    dialog.destroy()
-                    Gimp.message("No selection found!")
-                    Gimp.Image.undo_group_end(image)
-
-                    return procedure.new_return_values(Gimp.PDBStatusType.CALLING_ERROR, GLib.Error(message="No Selection Found!"))
-                # Yay selection :)
-                else:
-                    drawable = drawables[0]
-                    Gimp.Drawable.edit_fill(drawable, Gimp.FillType.WHITE)
-                    Gimp.Selection.invert(image)
-                    Gimp.Drawable.edit_fill(drawable, Gimp.FillType.WHITE)
-                    Gimp.Drawable.invert(drawable, False)
-                    fname = time.time()
-                    Gimp.file_save(Gimp.RunMode.NONINTERACTIVE, image, Gio.File.new_for_path(f"{fname}.png"), None)
-                    
-                    Gimp.Image.undo_group_end(image)
-
-                    self.inpaint()
-                    return procedure.new_return_values(Gimp.PDBStatusType.SUCCESS, GLib.Error())
-
-            else:
+        response = dialog.run()
+        if response == Gtk.ResponseType.OK:
+            # No selection :(
+            if Gimp.Selection.is_empty(image):
                 dialog.destroy()
-                Gimp.message("CANCEL Pressed!")
+                Gimp.message("No selection found!")
 
-                return procedure.new_return_values(Gimp.PDBStatusType.CANCEL, GLib.Error())
+                return procedure.new_return_values(Gimp.PDBStatusType.CALLING_ERROR, GLib.Error(message="No Selection Found!"))
+            # Yay selection :)
+            else:
+                image.enable_undo()
+                Gimp.Image.undo_group_start(image)
+                drawable = drawables[0]
+                Gimp.Drawable.edit_fill(drawable, Gimp.FillType.WHITE)
+                Gimp.Selection.invert(image)
+                Gimp.Drawable.edit_fill(drawable, Gimp.FillType.WHITE)
+                Gimp.Drawable.invert(drawable, False)
+                fname = time.time()
+
+                Gimp.file_save(Gimp.RunMode.NONINTERACTIVE, image, Gio.File.new_for_path(f"{fname}_mask.png"), None)
+                Gimp.Image.undo_group_end(image)
+                Gimp.file_save(Gimp.RunMode.NONINTERACTIVE, image, Gio.File_new_for_path(f"{fname}.png"), None)
+
+                self.inpaint()
+                dialog.destroy()
+                return procedure.new_return_values(Gimp.PDBStatusType.SUCCESS, GLib.Error())
+
+        else:
+            dialog.destroy()
+            Gimp.message("CANCEL Pressed!")
+
+            return procedure.new_return_values(Gimp.PDBStatusType.CANCEL, GLib.Error())
 
 
 Gimp.main(AiIntegration.__gtype__, sys.argv)
