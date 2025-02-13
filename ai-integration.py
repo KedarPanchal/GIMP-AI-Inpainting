@@ -42,8 +42,11 @@ class AiIntegration(Gimp.PlugIn):
         else:
           return 768/tiny  
 
-    def inpaint(self):
-        pass
+    def inpaint(self, image, mask, prompt):
+        pipeline = diffusers.StableDiffusionInpaintPipeline.from_pretrained("stable-diffusion-v1-5/stable-diffusion-inpainting", revision="fp16", torch_dtype=torch.float16)
+
+        output_image = pipeline(prompt=prompt, image=image, mask_image=mask).images[0]
+        return output_image
 
     def run(self, procedure, run_mode, image, drawables, config, run_data):
         # Init UI
@@ -74,7 +77,7 @@ class AiIntegration(Gimp.PlugIn):
                 return procedure.new_return_values(Gimp.PDBStatusType.CALLING_ERROR, GLib.Error(message="No Selection Found!"))
             # Yay selection :)
             else:
-                image.enable_undo()
+                image.undo_enable()
                 Gimp.Image.undo_group_start(image)
                 drawable = drawables[0]
                 Gimp.Drawable.edit_fill(drawable, Gimp.FillType.WHITE)
@@ -84,10 +87,11 @@ class AiIntegration(Gimp.PlugIn):
                 fname = time.time()
 
                 Gimp.file_save(Gimp.RunMode.NONINTERACTIVE, image, Gio.File.new_for_path(f"{fname}_mask.png"), None)
+                image.undo_disable()
                 Gimp.Image.undo_group_end(image)
-                Gimp.file_save(Gimp.RunMode.NONINTERACTIVE, image, Gio.File_new_for_path(f"{fname}.png"), None)
+                Gimp.file_save(Gimp.RunMode.NONINTERACTIVE, image, Gio.File.new_for_path(f"{fname}.png"), None)
 
-                self.inpaint()
+                # self.inpaint()
                 dialog.destroy()
                 return procedure.new_return_values(Gimp.PDBStatusType.SUCCESS, GLib.Error())
 
