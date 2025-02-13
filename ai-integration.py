@@ -77,21 +77,22 @@ class AiIntegration(Gimp.PlugIn):
                 return procedure.new_return_values(Gimp.PDBStatusType.CALLING_ERROR, GLib.Error(message="No Selection Found!"))
             # Yay selection :)
             else:
-                image.undo_enable()
                 Gimp.Image.undo_group_start(image)
-                drawable = drawables[0]
+
+                layer = Gimp.Layer.new_from_visible(image, image, "mask")
+                Gimp.Image.insert_layer(image, layer, None, -1)
+                drawable = image.get_layers()[0]
                 Gimp.Drawable.edit_fill(drawable, Gimp.FillType.WHITE)
                 Gimp.Selection.invert(image)
                 Gimp.Drawable.edit_fill(drawable, Gimp.FillType.WHITE)
                 Gimp.Drawable.invert(drawable, False)
+                
                 fname = time.time()
-
                 Gimp.file_save(Gimp.RunMode.NONINTERACTIVE, image, Gio.File.new_for_path(f"{fname}_mask.png"), None)
-                image.undo_disable()
+                Gimp.Image.remove_layer(image, layer)
                 Gimp.Image.undo_group_end(image)
                 Gimp.file_save(Gimp.RunMode.NONINTERACTIVE, image, Gio.File.new_for_path(f"{fname}.png"), None)
 
-                # self.inpaint()
                 dialog.destroy()
                 return procedure.new_return_values(Gimp.PDBStatusType.SUCCESS, GLib.Error())
 
