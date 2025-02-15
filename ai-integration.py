@@ -37,10 +37,10 @@ class AiIntegration(Gimp.PlugIn):
     def img_scale(self, image):
         tiny = min(image.size)
 
-        if tiny >= 768:
+        if tiny >= 512:
             return 1
         else:
-          return 768/tiny  
+          return 512/tiny  
 
     def inpaint(self, image, mask, prompt):
         pipeline = diffusers.StableDiffusionInpaintPipeline.from_pretrained("stable-diffusion-v1-5/stable-diffusion-inpainting", revision="fp16", torch_dtype=torch.float16)
