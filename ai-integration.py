@@ -28,9 +28,9 @@ class AiIntegration(Gimp.PlugIn):
     def do_create_procedure(self, name):
         procedure = Gimp.ImageProcedure.new(self, name, Gimp.PDBProcType.PLUGIN, self.run, None)
         procedure.set_image_types("*")
-        procedure.set_menu_label("Flux 1.x Inpainting")
+        procedure.set_menu_label("AI Inpainting")
         procedure.add_menu_path("<Image>/Filters/Render/")
-        procedure.set_attribution("K Panchal", "K Panchal", "2024")
+        procedure.set_attribution("K Panchal", "K Panchal", "2025")
 
         return procedure
 
