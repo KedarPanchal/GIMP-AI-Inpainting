@@ -37,8 +37,17 @@ class AiIntegration(Gimp.PlugIn):
 
     def inpaint(self, image, mask, **args):
         pipeline = diffusers.AutoPipelineForInpainting.from_pretrained("diffusers/stable-diffusion-xl-1.0-inpainting-0.1", torch_dtype=torch.float16, variant="fp16", safety_checker=None)
-        pipeline = pipeline.to("mps")
-        pipeline.enable_attention_slicing()
+        
+        if torch.cuda.is_available():
+            pipeline = pipeline.to("cuda")
+        elif torch.backends.mps.is_available():
+            pipeline = pipeline.to("mps")
+
+        if args["cpu_offload"]:
+            pipeline.enable_sequential_cpu_offload()    
+
+        if args["attention_slicing"]:
+            pipeline.enable_attention_slicing()
         
         img = Image.open(image)
         m = Image.open(mask)
@@ -123,9 +132,20 @@ class AiIntegration(Gimp.PlugIn):
         parameter_box.pack_start(seed_label, False, False, 0)
         parameter_box.pack_start(seed_entry, True, True, 0)
 
+        # Add checkboxes for CPU usage & performance optimization
+        performance_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
+        performance_box.set_border_width(10)
+
+        cpu_checkbox = Gtk.CheckButton.new_with_label("CPU Offloading")
+        slicing_checkbox = Gtk.CheckButton.new_with_label("Attention Slicing (recommended for low VRAM computers)")
+
+        performance_box.pack_start(cpu_checkbox, False, False, 0)
+        performance_box.pack_start(slicing_checkbox, False, False, 0)
+
         dialog.get_content_area().add(text_input_box)
         dialog.get_content_area().add(negative_input_box)
         dialog.get_content_area().add(parameter_box)
+        dialog.get_content_area().add(performance_box)
         dialog.show_all()
 
         response = dialog.run()
@@ -162,7 +182,9 @@ class AiIntegration(Gimp.PlugIn):
                     negative_prompt=negative_prompt_entry.get_text(),
                     steps=steps_entry.get_text(),
                     cfg=cfg_entry.get_text(),
-                    strength=strength_entry.get_text()).show()
+                    strength=strength_entry.get_text(),
+                    cpu_offload=cpu_checkbox.get_active(),
+                    attention_slicing=slicing_checkbox.get_active()).show()
                 dialog.destroy()
                 return procedure.new_return_values(Gimp.PDBStatusType.SUCCESS, GLib.Error())
 
