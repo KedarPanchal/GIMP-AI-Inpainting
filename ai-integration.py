@@ -3,6 +3,7 @@ import sys
 import gi
 import time
 import platform
+import re
 
 import torch
 import diffusers
@@ -68,7 +69,7 @@ class AiIntegration(Gimp.PlugIn):
         # Add input for inpaint prompt
         text_input_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
         text_input_box.set_border_width(10)
-        prompt_label = Gtk.Label(label="Enter Prompt:")
+        prompt_label = Gtk.Label(label="Prompt:")
         prompt_entry = Gtk.Entry()
         prompt_entry.set_placeholder_text("Enter prompt...")
         text_input_box.pack_start(prompt_label, False, False, 0)
@@ -150,6 +151,7 @@ class AiIntegration(Gimp.PlugIn):
                 fname = time.time()
                 Gimp.file_save(Gimp.RunMode.NONINTERACTIVE, image, Gio.File.new_for_path(f"{fname}_mask.png"), None)
                 Gimp.Image.remove_layer(image, layer)
+                Gimp.Selection.invert(image)
                 Gimp.Image.undo_group_end(image)
                 Gimp.file_save(Gimp.RunMode.NONINTERACTIVE, image, Gio.File.new_for_path(f"{fname}.png"), None)
 
