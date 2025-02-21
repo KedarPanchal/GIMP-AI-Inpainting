@@ -32,38 +32,29 @@ class AiIntegration(Gimp.PlugIn):
         procedure.add_menu_path("<Image>/Filters/Render/")
         procedure.set_attribution("K Panchal", "K Panchal", "2025")
 
-        return procedure  
+        return procedure 
 
-    def img_scale(self, image):
-        tiny = min(image.size)
-
-        if tiny >= 512:
-            return 1
-        else:
-          return 512/tiny  
-
-    def inpaint(self, image, mask, prompt):
-        print("Prompt:")
-        print(prompt)
+    def inpaint(self, image, mask, **args):
         pipeline = diffusers.AutoPipelineForInpainting.from_pretrained("diffusers/stable-diffusion-xl-1.0-inpainting-0.1", torch_dtype=torch.float16, variant="fp16", safety_checker=None)
         pipeline = pipeline.to("mps")
-        # pipeline.enable_attention_slicing()
+        pipeline.enable_attention_slicing()
         
         img = Image.open(image)
         m = Image.open(mask)
         old_size = img.size
         img = img.resize((1024, 1024))
         m = m.resize((1024, 1024))
-
+        
         output_image = pipeline(
-            prompt=prompt, 
-            negative_prompt="bad anatomy, deformed, ugly, disfigured", 
+            prompt=args.get("prompt", ""), 
+            negative_prompt=args.get("negative_prompt", ""), 
             image=img, 
             mask_image=m, 
-            strength=0.7, 
-            guidance_scale=8.0,
-            num_inference_steps=10, 
+            strength=float(args.get("strength", 0.5)), 
+            guidance_scale=float(args.get("cfg", 7.5)),
+            num_inference_steps=int(args.get("steps", 10)), 
             generator=torch.Generator(device="mps").manual_seed(0)).images[0]
+            
         output_image = output_image.resize(old_size)
         return output_image
 
