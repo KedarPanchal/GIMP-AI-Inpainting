@@ -44,9 +44,6 @@ class AiIntegration(Gimp.PlugIn):
 
         if args["cpu_offload"]:
             pipeline.enable_sequential_cpu_offload()    
-
-        if args["attention_slicing"]:
-            pipeline.enable_attention_slicing()
         
         img = Image.open(image)
         m = Image.open(mask)
@@ -131,15 +128,12 @@ class AiIntegration(Gimp.PlugIn):
         parameter_box.pack_start(seed_label, False, False, 0)
         parameter_box.pack_start(seed_entry, True, True, 0)
 
-        # Add checkboxes for CPU usage & performance optimization
+        # Add checkbox for CPU usage for optimization
         performance_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
         performance_box.set_border_width(10)
 
         cpu_checkbox = Gtk.CheckButton.new_with_label("CPU Offloading")
-        slicing_checkbox = Gtk.CheckButton.new_with_label("Attention Slicing (recommended for low VRAM computers)")
-
         performance_box.pack_start(cpu_checkbox, False, False, 0)
-        performance_box.pack_start(slicing_checkbox, False, False, 0)
 
         dialog.get_content_area().add(text_input_box)
         dialog.get_content_area().add(negative_input_box)
@@ -182,8 +176,7 @@ class AiIntegration(Gimp.PlugIn):
                     steps=steps_entry.get_text(),
                     cfg=cfg_entry.get_text(),
                     strength=strength_entry.get_text(),
-                    cpu_offload=cpu_checkbox.get_active(),
-                    attention_slicing=slicing_checkbox.get_active()).show()
+                    cpu_offload=cpu_checkbox.get_active()).show()
 
                 os.remove(f"{fname}.png")
                 os.remove(f"{fname}_mask.png")
