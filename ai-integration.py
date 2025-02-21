@@ -184,7 +184,7 @@ class AiIntegration(Gimp.PlugIn):
                     strength=strength_entry.get_text(),
                     cpu_offload=cpu_checkbox.get_active(),
                     attention_slicing=slicing_checkbox.get_active()).show()
-                # dialog.destroy()
+
                 os.remove(f"{fname}.png")
                 os.remove(f"{fname}_mask.png")
                 return procedure.new_return_values(Gimp.PDBStatusType.SUCCESS, GLib.Error())

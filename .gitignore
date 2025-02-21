@@ -1,2 +1,4 @@
 .venv
 *.png
+prompts.txt
+test.sh
