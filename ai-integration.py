@@ -74,7 +74,57 @@ class AiIntegration(Gimp.PlugIn):
         text_input_box.pack_start(prompt_label, False, False, 0)
         text_input_box.pack_start(prompt_entry, True, True, 0)
 
+        # Add input for negative inpaint prompt
+        negative_input_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
+        negative_input_box.set_border_width(10)
+        negative_prompt_label = Gtk.Label(label="Negative Prompt:")
+        negative_prompt_entry = Gtk.Entry()
+        negative_prompt_entry.set_placeholder_text("Enter negative prompt...")
+        negative_input_box.pack_start(negative_prompt_label, False, False, 0)
+        negative_input_box.pack_start(negative_prompt_entry, True, True, 0)
+
+        # Add input for steps, CFG, strength
+        parameter_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
+        parameter_box.set_border_width(10)
+
+        steps_label = Gtk.Label(label="Steps:")
+        steps_entry = Gtk.Entry()
+        steps_entry.set_input_purpose(Gtk.InputPurpose.DIGITS)
+        steps_entry.set_width_chars(5)
+        steps_entry.set_text("10")
+
+        cfg_label = Gtk.Label(label="CFG:")
+        cfg_entry = Gtk.Entry()
+        cfg_entry.set_input_purpose(Gtk.InputPurpose.NUMBER)
+        cfg_entry.set_width_chars(5)
+        cfg_entry.set_text("7.5")
+
+        strength_label = Gtk.Label(label="Strength:")
+        strength_entry = Gtk.Entry()
+        strength_entry.set_input_purpose(Gtk.InputPurpose.NUMBER)
+        strength_entry.set_width_chars(5)
+        strength_entry.set_text("0.5")
+
+        seed_label = Gtk.Label(label="Seed:")
+        seed_entry = Gtk.Entry()
+        seed_entry.set_input_purpose(Gtk.InputPurpose.DIGITS)
+        seed_entry.set_text(f"{round(time.time())}")
+
+        parameter_box.pack_start(steps_label, False, False, 0)
+        parameter_box.pack_start(steps_entry, False, False, 0)
+
+        parameter_box.pack_start(cfg_label, False, False, 0)
+        parameter_box.pack_start(cfg_entry, False, False, 0)
+
+        parameter_box.pack_start(strength_label, False, False, 0)
+        parameter_box.pack_start(strength_entry, False, False, 0)
+
+        parameter_box.pack_start(seed_label, False, False, 0)
+        parameter_box.pack_start(seed_entry, True, True, 0)
+
         dialog.get_content_area().add(text_input_box)
+        dialog.get_content_area().add(negative_input_box)
+        dialog.get_content_area().add(parameter_box)
         dialog.show_all()
 
         response = dialog.run()
@@ -103,6 +153,14 @@ class AiIntegration(Gimp.PlugIn):
                 Gimp.Image.undo_group_end(image)
                 Gimp.file_save(Gimp.RunMode.NONINTERACTIVE, image, Gio.File.new_for_path(f"{fname}.png"), None)
 
+                self.inpaint(
+                    image=f"{fname}.png", 
+                    mask=f"{fname}_mask.png", 
+                    prompt=prompt_entry.get_text(), 
+                    negative_prompt=negative_prompt_entry.get_text(),
+                    steps=steps_entry.get_text(),
+                    cfg=cfg_entry.get_text(),
+                    strength=strength_entry.get_text()).show()
                 dialog.destroy()
                 return procedure.new_return_values(Gimp.PDBStatusType.SUCCESS, GLib.Error())
 
