@@ -166,7 +166,24 @@ class AiIntegration(Gimp.PlugIn):
                 Gimp.Image.remove_layer(image, layer)
                 Gimp.Selection.invert(image)
                 Gimp.Image.undo_group_end(image)
+
+                Gimp.Image.undo_group_start(image)
+                # Track already hidden layers
+                invisibles = []
+                # Set all nonselected layers to hidden
+                for layer in Gimp.Image.get_layers(image):
+                    if Gimp.Item.get_visible(layer):
+                        invisibles.append(layer)
+                    if layer not in Gimp.Image.get_selected_layers(image):
+                        Gimp.Item.set_visible(layer, True)
+
+                # Save image with only the selected layers
                 Gimp.file_save(Gimp.RunMode.NONINTERACTIVE, image, Gio.File.new_for_path(f"{fname}.png"), None)
+                # Reset back to original state
+                for layer in Gimp.Image.get_layers(image):
+                    if layer not in invisibles:
+                        Gimp.Item.set_visible(layer, True)
+                Gimp.Image.undo_group_end(image)
 
 #                self.inpaint(
 #                    image=f"{fname}.png", 
