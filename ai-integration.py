@@ -67,7 +67,7 @@ class AiIntegration(Gimp.PlugIn):
     def run(self, procedure, run_mode, image, drawables, config, run_data):
         # Init UI
         GimpUi.init("ai-integration.py")
-        dialog = GimpUi.Dialog(use_header_bar=True, title="AI Integration")
+        dialog = GimpUi.Dialog(use_header_bar=True, title="AI Inpainting")
         dialog.add_button("_Cancel", Gtk.ResponseType.CANCEL)
         dialog.add_button("_OK", Gtk.ResponseType.OK)
 
