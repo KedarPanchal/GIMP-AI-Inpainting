@@ -152,8 +152,8 @@ class AiIntegration(Gimp.PlugIn):
             # Yay selection :)
             else:
                 Gimp.Image.undo_group_start(image)
-
-                layer = Gimp.Layer.new_from_visible(image, image, "mask")
+                fname = time.time()
+                layer = Gimp.Layer.new_from_visible(image, image, f"{fname}")
                 Gimp.Image.insert_layer(image, layer, None, 0)
                 drawable = image.get_layers()[0]
                 Gimp.Drawable.edit_fill(drawable, Gimp.FillType.WHITE)
@@ -161,7 +161,6 @@ class AiIntegration(Gimp.PlugIn):
                 Gimp.Drawable.edit_fill(drawable, Gimp.FillType.WHITE)
                 Gimp.Drawable.invert(drawable, False)
                 
-                fname = time.time()
                 Gimp.file_save(Gimp.RunMode.NONINTERACTIVE, image, Gio.File.new_for_path(f"{fname}_mask.png"), None)
                 Gimp.Image.remove_layer(image, layer)
                 Gimp.Selection.invert(image)
