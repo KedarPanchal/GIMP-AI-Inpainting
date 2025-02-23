@@ -19,6 +19,7 @@ from gi.repository import Gio
 
 
 class AiIntegration(Gimp.PlugIn):
+    # Plugin initialization
     def do_query_procedures(self):
         return ["ai-integration"]
     
@@ -35,6 +36,9 @@ class AiIntegration(Gimp.PlugIn):
         return procedure 
 
     def inpaint(self, image, mask, **args):
+        """
+        """
+
         pipeline = diffusers.AutoPipelineForInpainting.from_pretrained("diffusers/stable-diffusion-xl-1.0-inpainting-0.1", torch_dtype=torch.float16, variant="fp16", safety_checker=None)
         
         if torch.cuda.is_available():
@@ -154,8 +158,10 @@ class AiIntegration(Gimp.PlugIn):
                 Gimp.Image.undo_group_start(image)
 
                 layer = Gimp.Layer.new_from_visible(image, image, "mask")
+                # The error is here, it's inserting the layer above the activte one instead of the top
                 Gimp.Image.insert_layer(image, layer, None, -1)
                 drawable = image.get_layers()[0]
+                print(drawable)
                 Gimp.Drawable.edit_fill(drawable, Gimp.FillType.WHITE)
                 Gimp.Selection.invert(image)
                 Gimp.Drawable.edit_fill(drawable, Gimp.FillType.WHITE)
@@ -183,6 +189,7 @@ class AiIntegration(Gimp.PlugIn):
                 for layer in Gimp.Image.get_layers(image):
                     if layer not in invisibles:
                         Gimp.Item.set_visible(layer, True)
+
                 Gimp.Image.undo_group_end(image)
 
 #                self.inpaint(
