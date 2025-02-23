@@ -184,15 +184,15 @@ class AiIntegration(Gimp.PlugIn):
                         Gimp.Item.set_visible(layer, True)
                 Gimp.Image.undo_group_end(image)
 
-                self.inpaint(
-                    image=f"{fname}.png", 
-                    mask=f"{fname}_mask.png", 
-                    prompt=prompt_entry.get_text(), 
-                    negative_prompt=negative_prompt_entry.get_text(),
-                    steps=steps_entry.get_text(),
-                    cfg=cfg_entry.get_text(),
-                    strength=strength_entry.get_text(),
-                    cpu_offload=cpu_checkbox.get_active()).show()
+#                self.inpaint(
+#                    image=f"{fname}.png", 
+#                    mask=f"{fname}_mask.png", 
+#                    prompt=prompt_entry.get_text(), 
+#                    negative_prompt=negative_prompt_entry.get_text(),
+#                    steps=steps_entry.get_text(),
+#                    cfg=cfg_entry.get_text(),
+#                    strength=strength_entry.get_text(),
+#                    cpu_offload=cpu_checkbox.get_active()).show()
 
                 os.remove(f"{fname}.png")
                 os.remove(f"{fname}_mask.png")
