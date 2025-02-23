@@ -159,7 +159,7 @@ class AiIntegration(Gimp.PlugIn):
 
                 layer = Gimp.Layer.new_from_visible(image, image, "mask")
                 # The error is here, it's inserting the layer above the activte one instead of the top
-                Gimp.Image.insert_layer(image, layer, None, -1)
+                Gimp.Image.insert_layer(image, layer, None, 0)
                 drawable = image.get_layers()[0]
                 print(drawable)
                 Gimp.Drawable.edit_fill(drawable, Gimp.FillType.WHITE)
