@@ -195,8 +195,8 @@ class AiIntegration(Gimp.PlugIn):
 #                    strength=strength_entry.get_text(),
 #                    cpu_offload=cpu_checkbox.get_active()).show()
 
-#                os.remove(f"{fname}.png")
-#                os.remove(f"{fname}_mask.png")
+                os.remove(f"{fname}.png")
+                os.remove(f"{fname}_mask.png")
                 return procedure.new_return_values(Gimp.PDBStatusType.SUCCESS, GLib.Error())
 
         else:
