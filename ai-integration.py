@@ -171,12 +171,13 @@ class AiIntegration(Gimp.PlugIn):
                 invisibles = []
                 # Set all nonselected layers to hidden
                 for layer in Gimp.Image.get_layers(image):
-                    if Gimp.Item.get_visible(layer):
+                    if not Gimp.Item.get_visible(layer):
                         invisibles.append(layer)
-                    if layer not in Gimp.Image.get_selected_layers(image):
-                        Gimp.Item.set_visible(layer, True)
+                    else:
+                        Gimp.Item.set_visible(layer, False)
 
                 # Save image with only the selected layers
+                Gimp.Item.set_visible(drawables[0], True)
                 Gimp.file_save(Gimp.RunMode.NONINTERACTIVE, image, Gio.File.new_for_path(f"{fname}.png"), None)
                 # Reset back to original state
                 for layer in Gimp.Image.get_layers(image):
