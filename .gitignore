@@ -3,3 +3,4 @@
 prompts.txt
 test.sh
 *.xcf
+.DS_Store
