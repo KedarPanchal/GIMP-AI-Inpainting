@@ -7,6 +7,7 @@ import random
 
 import torch
 import diffusers
+import numpy as np
 from PIL import Image
 
 gi.require_version("Gimp", "3.0")
@@ -52,6 +53,14 @@ class AiIntegration(Gimp.PlugIn):
             )
             if new_color not in colors:
                 return new_color
+
+    def replace_color(self, image, color):
+        colors = np.array(image)
+        r, g, b, a = colors.T
+        to_replace = (r == color[0]) & (g == color[1]) & (b == color[2]) 
+        colors[...][to_replace.T] = (0, 0, 0, 0)
+
+        return Image.fromarray(colors)
 
     def inpaint(self, image, mask, **args):
         pipeline = diffusers.AutoPipelineForInpainting.from_pretrained("diffusers/stable-diffusion-xl-1.0-inpainting-0.1", torch_dtype=torch.float16, variant="fp16", safety_checker=None)
