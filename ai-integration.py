@@ -228,7 +228,7 @@ class AiIntegration(Gimp.PlugIn):
                 img = img.convert("RGB")
                 img.save(f"{fname}.png")
 
-                self.inpaint(
+                inpaint = self.inpaint(
                     image=f"{fname}.png", 
                     mask=f"{fname}_mask.png", 
                     prompt=prompt_entry.get_text(), 
