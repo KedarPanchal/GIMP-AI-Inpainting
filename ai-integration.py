@@ -3,6 +3,7 @@ import sys
 import gi
 import time
 import os
+import random
 
 import torch
 import diffusers
@@ -33,6 +34,24 @@ class AiIntegration(Gimp.PlugIn):
         procedure.set_attribution("K Panchal", "K Panchal", "2025")
 
         return procedure 
+
+    """This is a horrible, godawful way of fixing the issue of Stable Diffusion not liking transparent images.
+       This bug has given me a lot of grief, which is why I'm typing up a comment to explain its madness.
+       To fix the issue I use brute force to find a color that's not present in the image.
+       I then create an image that's just this color, and superimpose the transparent image atop that background.
+       This creates a composite image with no transparency and a color I can easily just blanket remove from the image.
+       This is really inefficient. If by some stroke of genius I find a better solution, implement it ASAP.
+    """
+    def find_color_not_in_image(self, image):
+        colors = [color[1] for color in image.getcolors(maxcolors=100000)] # 100,000 is an arbitrarily large number
+        while True:
+            new_color = (
+                random.randint(0,255),
+                random.randint(0, 255),
+                random.randint(0,255)
+            )
+            if new_color not in colors:
+                return new_color
 
     def inpaint(self, image, mask, **args):
         pipeline = diffusers.AutoPipelineForInpainting.from_pretrained("diffusers/stable-diffusion-xl-1.0-inpainting-0.1", torch_dtype=torch.float16, variant="fp16", safety_checker=None)
@@ -190,6 +209,10 @@ class AiIntegration(Gimp.PlugIn):
                 Gimp.Image.undo_group_end(image)
 
                 img = Image.open(f"{fname}.png")
+                img = img.convert("RGBA")
+                background_color = self.find_color_not_in_image(img)
+                background_image = Image.new("RGBA", img.size, background_color)
+                img = Image.alpha_composite(background_image, img)
                 img = img.convert("RGB")
                 img.save(f"{fname}.png")
 
