@@ -219,9 +219,12 @@ class AiIntegration(Gimp.PlugIn):
 
                 img = Image.open(f"{fname}.png")
                 img = img.convert("RGBA")
-                background_color = self.find_color_not_in_image(img)
-                background_image = Image.new("RGBA", img.size, background_color)
-                img = Image.alpha_composite(background_image, img)
+
+                if img.getextrema()[3][0] < 255:
+                    background_color = self.find_color_not_in_image(img)
+                    background_image = Image.new("RGBA", img.size, background_color)
+                    img = Image.alpha_composite(background_image, img)
+
                 img = img.convert("RGB")
                 img.save(f"{fname}.png")
 
