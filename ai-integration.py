@@ -166,6 +166,10 @@ class AiIntegration(Gimp.PlugIn):
                 Gimp.Selection.invert(image)
                 Gimp.Image.undo_group_end(image)
 
+                mask = Image.open(f"{fname}_mask.png")
+                mask = mask.convert("RGB")
+                mask.save(f"{fname}_mask.png")
+
                 Gimp.Image.undo_group_start(image)
                 # Track already hidden layers
                 invisibles = []
@@ -184,6 +188,10 @@ class AiIntegration(Gimp.PlugIn):
                     if layer not in invisibles:
                         Gimp.Item.set_visible(layer, True)
                 Gimp.Image.undo_group_end(image)
+
+                img = Image.open(f"{fname}.png")
+                img = img.convert("RGB")
+                img.save(f"{fname}.png")
 
                 self.inpaint(
                     image=f"{fname}.png", 
