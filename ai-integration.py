@@ -238,8 +238,18 @@ class AiIntegration(Gimp.PlugIn):
                     strength=strength_entry.get_text(),
                     cpu_offload=cpu_checkbox.get_active()).show()
 
+                try:
+                    self.remove_color(inpaint, background_color)
+                except NameError:
+                    pass
+
+                inpaint.save(f"{fname}_inpaint.png")
+                inpaint_layer = Gimp.file_load_layer(Gimp.RunMode.NONINTERACTIVE, image, Gio.File.new_for_path(f"{fname}_inpaint.png"))
+                Gimp.Image.insert_layer(image, inpaint_layer, None, 1)
+
                 os.remove(f"{fname}.png")
                 os.remove(f"{fname}_mask.png")
+                os.remove(f"{fname}_inpaint.png")
                 return procedure.new_return_values(Gimp.PDBStatusType.SUCCESS, GLib.Error())
 
         else:
