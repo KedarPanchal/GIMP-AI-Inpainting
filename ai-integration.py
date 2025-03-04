@@ -228,7 +228,7 @@ class AiIntegration(Gimp.PlugIn):
                 img = img.convert("RGB")
                 img.save(f"{fname}.png")
 
-                self.inpaint(
+                inpaint = self.inpaint(
                     image=f"{fname}.png", 
                     mask=f"{fname}_mask.png", 
                     prompt=prompt_entry.get_text(), 
@@ -236,10 +236,20 @@ class AiIntegration(Gimp.PlugIn):
                     steps=steps_entry.get_text(),
                     cfg=cfg_entry.get_text(),
                     strength=strength_entry.get_text(),
-                    cpu_offload=cpu_checkbox.get_active()).show()
+                    cpu_offload=cpu_checkbox.get_active())
+
+                try:
+                    self.replace_color(inpaint, background_color)
+                except NameError:
+                    pass
+
+                inpaint.save(f"{fname}_inpaint.png")
+                inpaint_layer = Gimp.file_load_layer(Gimp.RunMode.NONINTERACTIVE, image, Gio.File.new_for_path(f"{fname}_inpaint.png"))
+                Gimp.Image.insert_layer(image, inpaint_layer, None, Gimp.Image.get_layers(image).index(drawables[0]))
 
                 os.remove(f"{fname}.png")
                 os.remove(f"{fname}_mask.png")
+                os.remove(f"{fname}_inpaint.png")
                 return procedure.new_return_values(Gimp.PDBStatusType.SUCCESS, GLib.Error())
 
         else:
