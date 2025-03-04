@@ -236,10 +236,10 @@ class AiIntegration(Gimp.PlugIn):
                     steps=steps_entry.get_text(),
                     cfg=cfg_entry.get_text(),
                     strength=strength_entry.get_text(),
-                    cpu_offload=cpu_checkbox.get_active()).show()
+                    cpu_offload=cpu_checkbox.get_active())
 
                 try:
-                    self.remove_color(inpaint, background_color)
+                    self.replace_color(inpaint, background_color)
                 except NameError:
                     pass
 
