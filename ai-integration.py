@@ -245,7 +245,7 @@ class AiIntegration(Gimp.PlugIn):
 
                 inpaint.save(f"{fname}_inpaint.png")
                 inpaint_layer = Gimp.file_load_layer(Gimp.RunMode.NONINTERACTIVE, image, Gio.File.new_for_path(f"{fname}_inpaint.png"))
-                Gimp.Image.insert_layer(image, inpaint_layer, None, 1)
+                Gimp.Image.insert_layer(image, inpaint_layer, None, Gimp.Image.get_layers(image).index(drawables[0]))
 
                 os.remove(f"{fname}.png")
                 os.remove(f"{fname}_mask.png")
