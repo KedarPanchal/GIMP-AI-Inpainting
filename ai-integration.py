@@ -44,7 +44,7 @@ class AiIntegration(Gimp.PlugIn):
        This is really inefficient. If by some stroke of genius I find a better solution, implement it ASAP.
     """
     def find_color_not_in_image(self, image):
-        colors = [color[1] for color in image.getcolors(maxcolors=100000)] # 100,000 is an arbitrarily large number
+        colors = {color[1] for color in image.getcolors(maxcolors=100000)} # 100,000 is an arbitrarily large number
         while True:
             new_color = (
                 random.randint(0,255),
