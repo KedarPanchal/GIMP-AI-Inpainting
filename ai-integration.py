@@ -189,14 +189,16 @@ class AiIntegration(Gimp.PlugIn):
                 Gimp.Drawable.edit_fill(drawable, Gimp.FillType.WHITE)
                 Gimp.Drawable.invert(drawable, False)
                 
-                Gimp.file_save(Gimp.RunMode.NONINTERACTIVE, image, Gio.File.new_for_path(f"{fname}_mask.png"), None)
+                save_path = os.path.join(os.path.expanduser("~/Documents"), f"{fname}")
+
+                Gimp.file_save(Gimp.RunMode.NONINTERACTIVE, image, Gio.File.new_for_path(f"{save_path}_mask.png"), None)
                 Gimp.Image.remove_layer(image, layer)
                 Gimp.Selection.invert(image)
                 Gimp.Image.undo_group_end(image)
 
-                mask = Image.open(f"{fname}_mask.png")
+                mask = Image.open(f"{save_path}_mask.png")
                 mask = mask.convert("RGB")
-                mask.save(f"{fname}_mask.png")
+                mask.save(f"{save_path}_mask.png")
 
                 Gimp.Image.undo_group_start(image)
                 # Track already hidden layers
@@ -210,14 +212,14 @@ class AiIntegration(Gimp.PlugIn):
 
                 # Save image with only the selected layers
                 Gimp.Item.set_visible(drawables[0], True)
-                Gimp.file_save(Gimp.RunMode.NONINTERACTIVE, image, Gio.File.new_for_path(f"{fname}.png"), None)
+                Gimp.file_save(Gimp.RunMode.NONINTERACTIVE, image, Gio.File.new_for_path(f"{save_path}.png"), None)
                 # Reset back to original state
                 for layer in Gimp.Image.get_layers(image):
                     if layer not in invisibles:
                         Gimp.Item.set_visible(layer, True)
                 Gimp.Image.undo_group_end(image)
 
-                img = Image.open(f"{fname}.png")
+                img = Image.open(f"{save_path}.png")
                 img = img.convert("RGBA")
 
                 if img.getextrema()[3][0] < 255:
@@ -226,11 +228,11 @@ class AiIntegration(Gimp.PlugIn):
                     img = Image.alpha_composite(background_image, img)
 
                 img = img.convert("RGB")
-                img.save(f"{fname}.png")
+                img.save(f"{save_path}.png")
 
                 inpaint = self.inpaint(
-                    image=f"{fname}.png", 
-                    mask=f"{fname}_mask.png", 
+                    image=f"{save_path}.png", 
+                    mask=f"{save_path}_mask.png", 
                     prompt=prompt_entry.get_text(), 
                     negative_prompt=negative_prompt_entry.get_text(),
                     steps=steps_entry.get_text(),
@@ -243,14 +245,14 @@ class AiIntegration(Gimp.PlugIn):
                 except NameError:
                     pass
 
-                inpaint.save(f"{fname}_inpaint.png")
-                inpaint_layer = Gimp.file_load_layer(Gimp.RunMode.NONINTERACTIVE, image, Gio.File.new_for_path(f"{fname}_inpaint.png"))
+                inpaint.save(f"{save_path}_inpaint.png")
+                inpaint_layer = Gimp.file_load_layer(Gimp.RunMode.NONINTERACTIVE, image, Gio.File.new_for_path(f"{save_path}_inpaint.png"))
                 Gimp.Item.set_name(inpaint_layer, f"{Gimp.Item.get_name(drawables[0])}_inpaint")
                 Gimp.Image.insert_layer(image, inpaint_layer, None, Gimp.Image.get_layers(image).index(drawables[0]))
 
-                os.remove(f"{fname}.png")
-                os.remove(f"{fname}_mask.png")
-                os.remove(f"{fname}_inpaint.png")
+                os.remove(f"{save_path}.png")
+                os.remove(f"{save_path}_mask.png")
+                os.remove(f"{save_path}_inpaint.png")
                 return procedure.new_return_values(Gimp.PDBStatusType.SUCCESS, GLib.Error())
 
         else:
