@@ -61,6 +61,14 @@ class AiIntegration(Gimp.PlugIn):
         colors[...][to_replace.T] = (0, 0, 0, 0)
 
         return Image.fromarray(colors)
+    
+    def progress_bar_closure(total_steps):
+        def progress_bar_callback(pipe, step_index, timestep, callback_kwargs):
+            Gimp.progress_update(float(step_index)/total_steps)
+            return callback_kwargs
+        
+        return progress_bar_callback
+
 
     def inpaint(self, image, mask, **args):
         pipeline = diffusers.AutoPipelineForInpainting.from_pretrained("diffusers/stable-diffusion-xl-1.0-inpainting-0.1", torch_dtype=torch.float16, variant="fp16", safety_checker=None)
@@ -87,7 +95,8 @@ class AiIntegration(Gimp.PlugIn):
             strength=float(args.get("strength", 0.5)), 
             guidance_scale=float(args.get("cfg", 7.5)),
             num_inference_steps=int(args.get("steps", 10)), 
-            generator=torch.Generator(device="mps").manual_seed(0)).images[0]
+            generator=torch.Generator(device="mps").manual_seed(0),
+            callback_on_step_end=AiIntegration.progress_bar_closure(float(args.get("steps", 10)))).images[0]
             
         output_image = output_image.resize(old_size)
         return output_image
@@ -230,6 +239,7 @@ class AiIntegration(Gimp.PlugIn):
                 img = img.convert("RGB")
                 img.save(f"{save_path}.png")
 
+                Gimp.progress_init("Generating inpainting...")
                 inpaint = self.inpaint(
                     image=f"{save_path}.png", 
                     mask=f"{save_path}_mask.png", 
@@ -249,10 +259,12 @@ class AiIntegration(Gimp.PlugIn):
                 inpaint_layer = Gimp.file_load_layer(Gimp.RunMode.NONINTERACTIVE, image, Gio.File.new_for_path(f"{save_path}_inpaint.png"))
                 Gimp.Item.set_name(inpaint_layer, f"{Gimp.Item.get_name(drawables[0])}_inpaint")
                 Gimp.Image.insert_layer(image, inpaint_layer, None, Gimp.Image.get_layers(image).index(drawables[0]))
+                Gimp.progress_end()
 
                 os.remove(f"{save_path}.png")
                 os.remove(f"{save_path}_mask.png")
                 os.remove(f"{save_path}_inpaint.png")
+                dialog.destroy()
                 return procedure.new_return_values(Gimp.PDBStatusType.SUCCESS, GLib.Error())
 
         else:
