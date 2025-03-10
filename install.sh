@@ -1,6 +1,7 @@
 #!/bin/bash
 
 read -p "GIMP 3.0 Python Path: " gimp_path
+gimp_path=$(echo "$gimp_path" | xargs)
 python_path="${gimp_path}/python"
 cd "$gimp_path"
 
