@@ -54,6 +54,10 @@ class AiIntegration(Gimp.PlugIn):
             if new_color not in colors:
                 return new_color
 
+    """This function replaces a color in Pillow Image by turning it into a numpy array. By transposing the array,
+        each color can be extracted in its own 2-D array and a filter applied to set all target color values to a fully transparent
+        black.
+    """
     def replace_color(self, image, color):
         colors = np.array(image)
         r, g, b, a = colors.T
@@ -62,6 +66,10 @@ class AiIntegration(Gimp.PlugIn):
 
         return Image.fromarray(colors)
     
+    """The callback function used for updating the progress bar doesn't accept other parameters other than the ones provided in the documentation.
+        In order to work around this to pass the total steps in the image as a parameter, a closure can be used that takes in the total steps parameter
+        and returns a function that follows the specification of a pipeline callback but still has information regarding the total steps used in the inpainting generation.
+    """
     def progress_bar_closure(total_steps):
         def progress_bar_callback(pipe, step_index, timestep, callback_kwargs):
             Gimp.progress_update(float(step_index)/total_steps)
@@ -69,18 +77,29 @@ class AiIntegration(Gimp.PlugIn):
         
         return progress_bar_callback
 
-
+    """The function where the second-most brunt work is done. This performs the actual AI inpainting.
+        Arguments are given as kwargs to improve the readability of the function signature and also to make
+        adding extra parameters easier in the future. Currently, the supported kwargs are:
+        1. CPU Offloading
+        2. Prompt
+        3. Negative Prompt
+        4. Strength
+        5. CFG Scale
+        6. Steps
+    """
     def inpaint(self, image, mask, **args):
         pipeline = diffusers.AutoPipelineForInpainting.from_pretrained("diffusers/stable-diffusion-xl-1.0-inpainting-0.1", torch_dtype=torch.float16, variant="fp16", safety_checker=None)
         
-        if torch.cuda.is_available():
+        # Check if GPU acceleration can be performed
+        if torch.cuda.is_available(): # For NVIDIA GPUs
             pipeline = pipeline.to("cuda")
-        elif torch.backends.mps.is_available():
+        elif torch.backends.mps.is_available(): # For Apple Silicon
             pipeline = pipeline.to("mps")
 
         if args["cpu_offload"]:
             pipeline.enable_sequential_cpu_offload()    
         
+        # Resize image to 1024x1024 to fit the image size 
         img = Image.open(image)
         m = Image.open(mask)
         old_size = img.size
@@ -98,6 +117,7 @@ class AiIntegration(Gimp.PlugIn):
             generator=torch.Generator(device="mps").manual_seed(0),
             callback_on_step_end=AiIntegration.progress_bar_closure(float(args.get("steps", 10)) * args.get("strength", 0.5))).images[0]
             
+        # Resize back for good proportions    
         output_image = output_image.resize(old_size)
         return output_image
 
@@ -188,8 +208,9 @@ class AiIntegration(Gimp.PlugIn):
                 return procedure.new_return_values(Gimp.PDBStatusType.CALLING_ERROR, GLib.Error(message="No Selection Found!"))
             # Yay selection :)
             else:
-                Gimp.Image.undo_group_start(image)
-                fname = time.time()
+                Gimp.Image.undo_group_start(image) # This is useless at the moment but in case GIMP unuselesses it then this will be good
+                fname = time.time() # time.time() would give a unique name for a PNG
+                # Create layer for mask and insert at top
                 layer = Gimp.Layer.new_from_visible(image, image, f"{fname}")
                 Gimp.Image.insert_layer(image, layer, None, 0)
                 drawable = image.get_layers()[0]
@@ -198,13 +219,15 @@ class AiIntegration(Gimp.PlugIn):
                 Gimp.Drawable.edit_fill(drawable, Gimp.FillType.WHITE)
                 Gimp.Drawable.invert(drawable, False)
                 
-                save_path = os.path.join(os.path.expanduser("~/Documents"), f"{fname}")
+                save_path = os.path.join(os.path.expanduser("~/Documents"), f"{fname}") # Save to Documents for now
 
                 Gimp.file_save(Gimp.RunMode.NONINTERACTIVE, image, Gio.File.new_for_path(f"{save_path}_mask.png"), None)
+                # Undo all actions taken manually because undo groups aren't what I think they are
                 Gimp.Image.remove_layer(image, layer)
                 Gimp.Selection.invert(image)
                 Gimp.Image.undo_group_end(image)
 
+                # Hidden layers cause an alpha channel to be added to an image even if its not transparent
                 mask = Image.open(f"{save_path}_mask.png")
                 mask = mask.convert("RGB")
                 mask.save(f"{save_path}_mask.png")
@@ -220,7 +243,7 @@ class AiIntegration(Gimp.PlugIn):
                         Gimp.Item.set_visible(layer, False)
 
                 # Save image with only the selected layers
-                Gimp.Item.set_visible(drawables[0], True)
+                Gimp.Item.set_visible(drawables[0], True) # The earlier for loop sets the selected layer invisible, so we uninvisible it
                 Gimp.file_save(Gimp.RunMode.NONINTERACTIVE, image, Gio.File.new_for_path(f"{save_path}.png"), None)
                 # Reset back to original state
                 for layer in Gimp.Image.get_layers(image):
@@ -229,16 +252,17 @@ class AiIntegration(Gimp.PlugIn):
                 Gimp.Image.undo_group_end(image)
 
                 img = Image.open(f"{save_path}.png")
-                img = img.convert("RGBA")
+                img = img.convert("RGBA") # Convert to RGBA to make things compatible with the color replacement code
 
-                if img.getextrema()[3][0] < 255:
-                    background_color = self.find_color_not_in_image(img)
+                if img.getextrema()[3][0] < 255: # Check if there is an alpha value that isn't fully opaque before color replacing
+                    background_color = self.find_color_not_in_image(img) # Blow up computer with this atrocity
                     background_image = Image.new("RGBA", img.size, background_color)
                     img = Image.alpha_composite(background_image, img)
 
-                img = img.convert("RGB")
+                img = img.convert("RGB") # Remove alpha channel
                 img.save(f"{save_path}.png")
 
+                # Init progress bar and begin inpainting process
                 Gimp.progress_init("Generating inpainting...")
                 inpaint = self.inpaint(
                     image=f"{save_path}.png", 
@@ -249,18 +273,23 @@ class AiIntegration(Gimp.PlugIn):
                     cfg=cfg_entry.get_text(),
                     strength=strength_entry.get_text(),
                     cpu_offload=cpu_checkbox.get_active())
-
+                
+                # Lazy way of checking whether to replace a background color or not.
+                # The background color variable wouldn't exist if there was no replacement needed.
+                # So the try-except statement just catches and drops the NameError from a nonexistent variable because nothing needs to be done.
                 try:
                     self.replace_color(inpaint, background_color)
                 except NameError:
                     pass
 
+                # Save and insert inpainted image above the selected one
                 inpaint.save(f"{save_path}_inpaint.png")
                 inpaint_layer = Gimp.file_load_layer(Gimp.RunMode.NONINTERACTIVE, image, Gio.File.new_for_path(f"{save_path}_inpaint.png"))
                 Gimp.Item.set_name(inpaint_layer, f"{Gimp.Item.get_name(drawables[0])}_inpaint")
                 Gimp.Image.insert_layer(image, inpaint_layer, None, Gimp.Image.get_layers(image).index(drawables[0]))
                 Gimp.progress_end()
 
+                # Delete all images used for inpainting process
                 os.remove(f"{save_path}.png")
                 os.remove(f"{save_path}_mask.png")
                 os.remove(f"{save_path}_inpaint.png")
