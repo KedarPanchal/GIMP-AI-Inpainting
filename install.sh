@@ -19,7 +19,7 @@ sudo rm -rf "get-pip.py"
 
 # Install required packages
 sudo curl -sSL https://raw.githubusercontent.com/KedarPanchal/GIMP-AI-Inpainting/refs/heads/main/requirements.txt -o requirements.txt
-$(echo "sudo ${python_path} -m pip install -r requirements.txt")
+$(echo "sudo ${python_path} -m pip install --root-user-action=ignore -r requirements.txt")
 sudo rm -rf "requirements.txt"
 
 # Download plugin to GIMP
