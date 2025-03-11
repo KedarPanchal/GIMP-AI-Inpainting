@@ -31,7 +31,6 @@ else
     plug_in_folder=$(echo "$plug_in_folder" | xargs)
 fi
 cd "$plug_in_folder"
+mkdir ai-integration && cd $_
 sudo curl -sSL https://raw.githubusercontent.com/KedarPanchal/GIMP-AI-Inpainting/refs/heads/main/ai-integration.py -o ai-integration.py
-mkdir ai-integration
-mv ai-integration.py ai-integration
-sudo chmod +x ai-integration/ai-integration.py
+sudo chmod +x ai-integration.py
