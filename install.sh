@@ -15,12 +15,12 @@ fi
 # Install pip on GIMP Python
 sudo curl -sSL https://bootstrap.pypa.io/get-pip.py -o get-pip.py
 $(echo "${python_path} get-pip.py")
-sudo rm -rf "get-pip.py"
+sudo rm -f "get-pip.py"
 
 # Install required packages
 sudo curl -sSL https://raw.githubusercontent.com/KedarPanchal/GIMP-AI-Inpainting/refs/heads/main/requirements.txt -o requirements.txt
 $(echo "sudo ${python_path} -m pip install --root-user-action=ignore -r requirements.txt")
-sudo rm -rf "requirements.txt"
+sudo rm -f "requirements.txt"
 
 # Download plugin to GIMP
 if [[ $OSTYPE == "darwin"* ]]; then
