@@ -5,6 +5,8 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
     cd "/Applications/GIMP.app/Contents/MacOS"
     python_path="/Applications/GIMP.app/Contents/MacOS/python"
 elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
+    read -p "GIMP AppImage Path: " appimage_path
+    ./"$appimage_path" &
     gimp_path=$(find /tmp -maxdepth 1 -mindepth 1 -name ".mount_GIMP-*")
     cd "$gimp_path"
     python_path="$gimp_path/usr/bin/python3"
