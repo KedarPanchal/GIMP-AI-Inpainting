@@ -4,6 +4,10 @@
 if [[ "$OSTYPE" == "darwin"* ]]; then
     cd "/Applications/GIMP.app/Contents/MacOS"
     python_path="/Applications/GIMP.app/Contents/MacOS/python"
+elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
+    gimp_path=find /tmp -maxdepth 1 -mindepth 1 -name ".mount_GIMP-*"
+    cd "$gimp_path"
+    python_path="$gimp_path/usr/bin/python3"
 else
     # Read and change directories to where GIMP's Python version is
     read -p "GIMP 3.0 Python Path: " gimp_path
@@ -23,14 +27,16 @@ $(echo "sudo ${python_path} -m pip install --root-user-action=ignore -r requirem
 sudo rm -f "requirements.txt"
 
 # Download plugin to GIMP
+me=$(whoami)
 if [[ $OSTYPE == "darwin"* ]]; then
-    me=$(whoami)
-    plug_in_folder="/Users/${me}/Library/Application Support/Gimp/3.0/plug-ins"
+    cd "/Users/${me}/Library/Application Support/Gimp/3.0/plug-ins"
+elif [[ $OSTYPE == "linux-gnu"* ]]; then
+    cd "/home/${me}/.config/GIMP/3.0/plug-ins"
 else
     read -p "Enter GIMP Plug-Ins folder: " plug_in_folder
     plug_in_folder=$(echo "$plug_in_folder" | xargs)
+    cd "$plug_in_folder"
 fi
-cd "$plug_in_folder"
 mkdir ai-integration && cd $_
 sudo curl -sSL https://raw.githubusercontent.com/KedarPanchal/GIMP-AI-Inpainting/refs/heads/main/ai-integration.py -o ai-integration.py
 sudo chmod +x ai-integration.py
