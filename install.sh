@@ -6,7 +6,9 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
     python_path="/Applications/GIMP.app/Contents/MacOS/python"
 elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
     read -p "GIMP AppImage Path: " appimage_path
+    appimage_path=$(realpath "${appimage}")
     ./"$appimage_path" &
+    gimp_pid=$!
     gimp_path=$(find /tmp -maxdepth 1 -mindepth 1 -name ".mount_GIMP-*")
     cd "$gimp_path"
     python_path="$gimp_path/usr/bin/python3"
@@ -33,6 +35,7 @@ me=$(whoami)
 if [[ $OSTYPE == "darwin"* ]]; then
     cd "/Users/${me}/Library/Application Support/Gimp/3.0/plug-ins"
 elif [[ $OSTYPE == "linux-gnu"* ]]; then
+    kill $gimp_pid
     cd "/home/${me}/.config/GIMP/3.0/plug-ins"
 else
     read -p "Enter GIMP Plug-Ins folder: " plug_in_folder
