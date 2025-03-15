@@ -9,7 +9,7 @@ elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
     appimage_path=$(realpath "$appimage_path")
     "$appimage_path" --appimage-mount &
     gimp_pid=$!
-    gimp_path=$(find /tmp -maxdepth 1 -mindepth 1 -name ".mount_GIMP-*" -quit)
+    gimp_path=$(find /tmp -maxdepth 1 -mindepth 1 -name ".mount_GIMP-*" | head -n 1)
     cd "$gimp_path"
     python_path="$gimp_path/usr/bin/python3"
 else
