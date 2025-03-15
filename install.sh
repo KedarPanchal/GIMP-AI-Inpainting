@@ -10,8 +10,9 @@ elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
     "$appimage_path" --appimage-mount &
     gimp_pid=$!
     gimp_path=$(ls -a /tmp | grep "\.mount_GIMP-*" | head -n 1)
-    cd "/tmp/$gimp_path"
-    python_path="$gimp_path/usr/bin/python3"
+    gimp_path="/tmp/$gimp_path"
+    cd "$gimp_path"
+    python_path="$gimp_path/usr/bin/python3.11"
 else
     # Read and change directories to where GIMP's Python version is
     read -p "GIMP 3.0 Python Path: " gimp_path
