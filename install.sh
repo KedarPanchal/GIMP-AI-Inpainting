@@ -1,25 +1,8 @@
 #!/bin/bash
 
 # Note: Do NOT run as sudo (causes whoami to break)!
-if [[ "$OSTYPE" == "darwin"* ]]; then
     cd "/Applications/GIMP.app/Contents/MacOS"
     python_path="/Applications/GIMP.app/Contents/MacOS/python"
-elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
-    read -p "GIMP AppImage Path: " appimage_path
-    appimage_path=$(realpath "$appimage_path")
-    "$appimage_path" --appimage-mount &
-    gimp_pid=$!
-    gimp_path=$(ls -a /tmp | grep "\.mount_GIMP-*" | head -n 1)
-    gimp_path="/tmp/$gimp_path"
-    cd "$gimp_path"
-    python_path="$gimp_path/usr/bin/python3.11"
-else
-    # Read and change directories to where GIMP's Python version is
-    read -p "GIMP 3.0 Python Path: " gimp_path
-    gimp_path=$(echo "$gimp_path" | xargs)
-    python_path="${gimp_path}/python"
-    cd "$gimp_path"
-fi
 
 # Install pip on GIMP Python
 sudo curl -sSL https://bootstrap.pypa.io/get-pip.py -o get-pip.py
@@ -33,16 +16,7 @@ sudo rm -f "requirements.txt"
 
 # Download plugin to GIMP
 me=$(whoami)
-if [[ $OSTYPE == "darwin"* ]]; then
     cd "/Users/${me}/Library/Application Support/Gimp/3.0/plug-ins"
-elif [[ $OSTYPE == "linux-gnu"* ]]; then
-    kill $gimp_pid
-    cd "/home/${me}/.config/GIMP/3.0/plug-ins"
-else
-    read -p "Enter GIMP Plug-Ins folder: " plug_in_folder
-    plug_in_folder=$(echo "$plug_in_folder" | xargs)
-    cd "$plug_in_folder"
-fi
 mkdir ai-integration && cd $_
 sudo curl -sSL https://raw.githubusercontent.com/KedarPanchal/GIMP-AI-Inpainting/refs/heads/main/ai-integration.py -o ai-integration.py
 sudo chmod +x ai-integration.py
