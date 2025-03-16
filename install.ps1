@@ -1,5 +1,6 @@
 Set-Location -Path "C:\Users\$([Environment]::UserName)\AppData\Local\Programs\GIMP 3\bin"
 
+$ "C:\Users\$([Environment]::UserName)\AppData\Local\Programs\GIMP 3\lib\python.3.12\venv\scripts\common\Activate.ps1"
 Invoke-WebRequest -Uri https://bootstrap.pypa.io/get-pip.py -OutFile get-pip.py
 & "$(Get-Location)\python.exe" get-pip.py
 Remove-Item get-pip.py
