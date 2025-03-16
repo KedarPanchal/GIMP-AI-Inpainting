@@ -1,5 +1,5 @@
 #!/bin/bash
-# This does not work on current Linux installations as flatpak and AppImage (the available versions of the GIMP 3.0 RCS) have read-only environments for their python instances (so pip won't work)
+# This does not work on current Linux installations as flatpak and AppImage (the available versions of the GIMP 3.0 RC3) have read-only environments for their python instances (so pip won't work)
 # Note: Do NOT run as sudo (causes whoami to break)!
 cd "/Applications/GIMP.app/Contents/MacOS"
 python_path="/Applications/GIMP.app/Contents/MacOS/python"
