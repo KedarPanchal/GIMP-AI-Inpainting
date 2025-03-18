@@ -115,7 +115,7 @@ class AiIntegration(Gimp.PlugIn):
             guidance_scale=float(args.get("cfg", 7.5)),
             num_inference_steps=int(args.get("steps", 10)), 
             generator=torch.Generator(device="mps").manual_seed(0),
-            callback_on_step_end=AiIntegration.progress_bar_closure(float(args.get("steps", 10)) * args.get("strength", 0.5))).images[0]
+            callback_on_step_end=AiIntegration.progress_bar_closure(float(args.get("steps", 10)) * float(args.get("strength", 0.5)))).images[0]
             
         # Resize back for good proportions    
         output_image = output_image.resize(old_size)
