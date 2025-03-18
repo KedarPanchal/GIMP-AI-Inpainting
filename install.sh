@@ -2,7 +2,7 @@
 # This does not work on current Linux installations as flatpak and AppImage (the available versions of the GIMP 3.0 RC3) have read-only environments for their python instances (so pip won't work)
 # Note: Do NOT run as sudo (causes whoami to break)!
 cd "/Applications/GIMP.app/Contents/MacOS"
-python_path="/Applications/GIMP.app/Contents/MacOS/python"
+python_path="/Applications/GIMP.app/Contents/MacOS/python3"
 
 # Install pip on GIMP Python
 sudo curl -sSL https://bootstrap.pypa.io/get-pip.py -o get-pip.py
