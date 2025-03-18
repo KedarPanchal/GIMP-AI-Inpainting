@@ -1,6 +1,6 @@
-.venv
 *.png
 prompts.txt
 test.sh
 *.xcf
 .DS_Store
+!resources/*
