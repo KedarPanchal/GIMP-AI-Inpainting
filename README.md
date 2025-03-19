@@ -66,7 +66,7 @@ After inputting values for each parameter, click the `OK` button to run the AI, 
 ---
 [Back to top](#table-of-contents)  
 
-* **Device**: M4 Macbook with 16GB Unified Memory
+* **Device**: M4 MacBook Pro with 16GB Unified Memory
 * **OS:** MacOS Sequoia 15.3.2
 * **Platforms:** GIMP 3 RC2, GIMP 3 RC3, GIMP 3.0
 
