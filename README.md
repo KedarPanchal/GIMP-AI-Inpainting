@@ -2,7 +2,9 @@
 ---
 This AI Integration plug-in brings inpainting capabilities to GIMP 3.0, allowing users to leverage powerful AI tools like [Stable Diffusion XL](https://huggingface.co/diffusers/stable-diffusion-xl-1.0-inpainting-0.1) to upgrade their image-editing workflow.
 
-<img src="resources/images/beforeandafter.png" alt="A before and after image, with the before image being that of a man in a suit and the after image being the same, but the man is now wearing sunglasses that were added in using AI inpainting.">
+<div align="center">
+   <img src="resources/images/beforeandafter.png" alt="A before and after image, with the before image being that of a man in a suit and the after image being the same, but the man is now wearing sunglasses that were added in using AI inpainting.">
+</div>
 
 ## Table of Contents
 ---
@@ -35,10 +37,13 @@ Linux's distribution of GIMP 3.0—at the time of writing—comes in either AppI
 ---
 [Back to top](#table-of-contents)  
 
-<a  href="resources/GIMP-AI-Inpainting-Demo.mp4">
-    <img src="resources/images/GIMP-AI-Inpainting-Demo.gif" alt="An animated GIF showing how to utilize the plugin">
-</a>
-<p style="text-align: center; font-size: 11">Click on the image to navigate to a video version of this demo!</p>
+<div align="center">
+   <a href="resources/GIMP-AI-Inpainting-Demo.mp4">
+       <img src="resources/images/GIMP-AI-Inpainting-Demo.gif" alt="An animated GIF showing how to utilize the plugin">
+   </a>
+   
+   <sup>Click on the image to navigate to a video version of this demo!</sup>
+</div>
 
 To use the plug-in, first make a selection on the layer you wish to modify using AI and ensure that layer is selected. The selection should encompass the area you wish to modify. Then, open the plug-in by navigating to the `Filters > Render` menu within GIMP and clicking on the `AI-Integration` menu item. There, you'll be greated by a UI with the following parameters:
 
