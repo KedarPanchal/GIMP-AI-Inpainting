@@ -60,7 +60,7 @@ After inputting values for each parameter, click the `OK` button to run the AI, 
 ### Things to remember
 * When using this plug-in for the first time, the generation may take longer than usual as the AI model is being downloaded from the internet.
 * If you encounter stutters or slow-downs during the generation process, be sure to close out any unused applications and/or ensure the `CPU Offloading` parameter is enabled in the plug-in UI.
-    * This plug-in runs the AI model on your local machine, meaning that it is resource-intensive during the generation process. Stable Diffusion XL—the model used in this plug-in—is a hefty one, requiring at least 8GB of VRAM in conjunction with 12 GB of RAM, or 16GB of unified memory, to run smoothly.
+    * This plug-in runs the AI model on your local machine, meaning that it is resource-intensive during the generation process. Stable Diffusion XL—the model used in this plug-in—is a hefty one, requiring at least 8GB of VRAM in conjunction with 12 GB of RAM, or at least 16GB of unified memory, to run smoothly.
 
 ## Development Specifications
 ---
