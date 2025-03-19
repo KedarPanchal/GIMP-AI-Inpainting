@@ -1,6 +1,6 @@
-*.png
+/*.png
 prompts.txt
 test.sh
-*.xcf
+/*.xcf
 .DS_Store
 !resources/*
