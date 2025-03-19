@@ -9,12 +9,16 @@ This AI Integration plug-in brings inpainting capabilities to GIMP 3.0, allowing
 * [Installation](#installation)
     * [MacOS](#macos)
     * [A note on Linux installation](#a-note-on-linux-installation)
-* Usage
-* Development Specifications
-* LICENSE
+* [Usage](#usage)
+    * [Things to remember](#things-to-remember)
+* [Development Specifications](#development-specifications)
+* [License](#license)
 
 ## Installation
 ---
+
+[Back to top](#table-of-contents)  
+
 > This plug-in is only available for GIMP 3.0 and later (this includes the RC releases). In the future I may look for a method of making this compatible with GIMP 2.
 
 ### MacOS
@@ -29,6 +33,8 @@ Linux's distribution of GIMP 3.0—at the time of writing—comes in either AppI
 
 ## Usage
 ---
+[Back to top](#table-of-contents)  
+
 <a  href="resources/GIMP-AI-Inpainting-Demo.mp4">
     <img src="resources/images/GIMP-AI-Inpainting-Demo.gif" alt="An animated GIF showing how to utilize the plugin">
 </a>
@@ -50,3 +56,17 @@ After inputting values for each parameter, click the `OK` button to run the AI, 
 * When using this plug-in for the first time, the generation may take longer than usual as the AI model is being downloaded from the internet.
 * If you encounter stutters or slow-downs during the generation process, be sure to close out any unused applications and/or ensure the `CPU Offloading` parameter is enabled in the plug-in UI.
     * This plug-in runs the AI model on your local machine, meaning that it is resource-intensive during the generation process. Stable Diffusion XL—the model used in this plug-in—is a hefty one, requiring at least 8GB of VRAM in conjunction with 12 GB of RAM, or 16GB of unified memory, to run smoothly.
+
+## Development Specifications
+---
+[Back to top](#table-of-contents)  
+
+* **Device**: M4 Macbook with 16GB Unified Memory
+* **OS:** MacOS Sequoia 15.3.2
+* **Platforms:** GIMP 3 RC2, GIMP 3 RC3, GIMP 3.0
+
+## License
+---
+[Back to top](#table-of-contents)  
+
+The GNU GPLv3 License 2025 - [Kedar Panchal](https://github.com/KedarPanchal). Please look at the [LICENSE](LICENSE) for more information.
