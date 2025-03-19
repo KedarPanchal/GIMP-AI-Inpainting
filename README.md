@@ -25,4 +25,4 @@ $ bash ./install.sh
 Do not run the `install.sh` script with elevated privileges (i.e. as `sudo`), as this may break where the script attempts to install the plug-in.
 
 ### A note on Linux installation
-Linux's distribution of GIMP 3.0—at the time of writing—comes in either AppImage or FlatPak form. Both of these formats run in a read-only sandbox environment, meaning the required dependencies for the plug-in cannot be installed. However, I do intend on seeking alternative solutions in which Python interpreters external to GIMP can be used to circumvent this issue.
+Linux's distribution of GIMP 3.0—at the time of writing—comes in either AppImage or Flatpak form. Both of these formats run in a read-only sandbox environment, meaning the required dependencies for the plug-in cannot be installed. However, I do intend on seeking alternative solutions in which Python interpreters external to GIMP can be used to circumvent this issue.
