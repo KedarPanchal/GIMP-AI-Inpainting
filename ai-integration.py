@@ -34,7 +34,14 @@ class AiIntegration(Gimp.PlugIn):
         procedure.add_menu_path("<Image>/Filters/Render/")
         procedure.set_attribution("K Panchal", "K Panchal", "2025")
 
-        return procedure 
+        return procedure
+
+    def get_transparent_coords(self, image):
+        pixels = np.array(image) 
+        transparents = np.column_stack(np.where(pixels[..., 3] == 0))
+        selection = transparents[random.randrange(transparents.shape[0])]
+        return (selection[1], selection[0])
+
 
     """This is a horrible, godawful way of fixing the issue of Stable Diffusion not liking transparent images.
        This bug has given me a lot of grief, which is why I'm typing up a comment to explain its madness.
@@ -49,23 +56,12 @@ class AiIntegration(Gimp.PlugIn):
             new_color = (
                 random.randint(0,255),
                 random.randint(0, 255),
-                random.randint(0,255)
+                random.randint(0,255),
+                255
             )
             if new_color not in colors:
                 return new_color
 
-    """This function replaces a color in Pillow Image by turning it into a numpy array. By transposing the array,
-        each color can be extracted in its own 2-D array and a filter applied to set all target color values to a fully transparent
-        black.
-    """
-    def replace_color(self, image, color):
-        colors = np.array(image)
-        r, g, b, a = colors.T
-        to_replace = (r == color[0]) & (g == color[1]) & (b == color[2]) 
-        colors[...][to_replace.T] = (0, 0, 0, 0)
-
-        return Image.fromarray(colors)
-    
     """The callback function used for updating the progress bar doesn't accept other parameters other than the ones provided in the documentation.
         In order to work around this to pass the total steps in the image as a parameter, a closure can be used that takes in the total steps parameter
         and returns a function that follows the specification of a pipeline callback but still has information regarding the total steps used in the inpainting generation.
@@ -100,17 +96,15 @@ class AiIntegration(Gimp.PlugIn):
             pipeline.enable_sequential_cpu_offload()    
         
         # Resize image to 1024x1024 to fit the image size 
-        img = Image.open(image)
-        m = Image.open(mask)
-        old_size = img.size
-        img = img.resize((1024, 1024))
-        m = m.resize((1024, 1024))
+        old_size = image.size
+        image = image.resize((1024, 1024))
+        mask = mask.resize((1024, 1024))
         
         output_image = pipeline(
             prompt=args.get("prompt", ""), 
             negative_prompt=args.get("negative_prompt", ""), 
-            image=img, 
-            mask_image=m, 
+            image=image, 
+            mask_image=mask, 
             strength=float(args.get("strength", 0.5)), 
             guidance_scale=float(args.get("cfg", 7.5)),
             num_inference_steps=int(args.get("steps", 10)), 
@@ -167,6 +161,12 @@ class AiIntegration(Gimp.PlugIn):
         strength_entry.set_input_purpose(Gtk.InputPurpose.NUMBER)
         strength_entry.set_width_chars(5)
         strength_entry.set_text("0.5")
+
+        feathering_label = Gtk.Label(label="Feathering: ")
+        feathering_entry = Gtk.Entry()
+        feathering_entry.set_input_purpose(Gtk.InputPurpose.DIGITS)
+        feathering_entry.set_width_chars(5)
+        feathering_entry.set_text("10")
 
         seed_label = Gtk.Label(label="Seed:")
         seed_entry = Gtk.Entry()
@@ -230,7 +230,6 @@ class AiIntegration(Gimp.PlugIn):
                 # Hidden layers cause an alpha channel to be added to an image even if its not transparent
                 mask = Image.open(f"{save_path}_mask.png")
                 mask = mask.convert("RGB")
-                mask.save(f"{save_path}_mask.png")
 
                 Gimp.Image.undo_group_start(image)
                 # Track already hidden layers
@@ -255,18 +254,18 @@ class AiIntegration(Gimp.PlugIn):
                 img = img.convert("RGBA") # Convert to RGBA to make things compatible with the color replacement code
 
                 if img.getextrema()[3][0] < 255: # Check if there is an alpha value that isn't fully opaque before color replacing
+                    reference_coords = self.get_transparent_coords(img)
                     background_color = self.find_color_not_in_image(img) # Blow up computer with this atrocity
                     background_image = Image.new("RGBA", img.size, background_color)
                     img = Image.alpha_composite(background_image, img)
 
                 img = img.convert("RGB") # Remove alpha channel
-                img.save(f"{save_path}.png")
 
                 # Init progress bar and begin inpainting process
                 Gimp.progress_init("Generating inpainting...")
                 inpaint = self.inpaint(
-                    image=f"{save_path}.png", 
-                    mask=f"{save_path}_mask.png", 
+                    image=img, 
+                    mask=mask, 
                     prompt=prompt_entry.get_text(), 
                     negative_prompt=negative_prompt_entry.get_text(),
                     steps=steps_entry.get_text(),
@@ -274,20 +273,23 @@ class AiIntegration(Gimp.PlugIn):
                     strength=strength_entry.get_text(),
                     cpu_offload=cpu_checkbox.get_active())
                 
-                # Lazy way of checking whether to replace a background color or not.
-                # The background color variable wouldn't exist if there was no replacement needed.
-                # So the try-except statement just catches and drops the NameError from a nonexistent variable because nothing needs to be done.
-                try:
-                    self.replace_color(inpaint, background_color)
-                except NameError:
-                    pass
-
                 # Save and insert inpainted image above the selected one
+                inpaint = inpaint.convert("RGBA")
                 inpaint.save(f"{save_path}_inpaint.png")
                 inpaint_layer = Gimp.file_load_layer(Gimp.RunMode.NONINTERACTIVE, image, Gio.File.new_for_path(f"{save_path}_inpaint.png"))
                 Gimp.Item.set_name(inpaint_layer, f"{Gimp.Item.get_name(drawables[0])}_inpaint")
                 Gimp.Image.insert_layer(image, inpaint_layer, None, Gimp.Image.get_layers(image).index(drawables[0]))
                 Gimp.progress_end()
+
+                try:
+                    cr = inpaint.getpixel(reference_coords)
+                    cr_string = f"rgb({cr[0]}, {cr[1]}, {cr[2]})"
+                    Gimp.Image.select_color(image, Gimp.ChannelOps.REPLACE, inpaint_layer, Gimp.color_parse_css(cr_string))
+                    Gimp.Drawable.edit_clear(inpaint_layer)
+                except NameError:
+                    pass
+                
+                Gimp.Selection.none(image)
 
                 # Delete all images used for inpainting process
                 os.remove(f"{save_path}.png")
