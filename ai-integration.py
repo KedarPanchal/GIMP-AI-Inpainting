@@ -162,12 +162,6 @@ class AiIntegration(Gimp.PlugIn):
         strength_entry.set_width_chars(5)
         strength_entry.set_text("0.5")
 
-        feathering_label = Gtk.Label(label="Feathering: ")
-        feathering_entry = Gtk.Entry()
-        feathering_entry.set_input_purpose(Gtk.InputPurpose.DIGITS)
-        feathering_entry.set_width_chars(5)
-        feathering_entry.set_text("10")
-
         seed_label = Gtk.Label(label="Seed:")
         seed_entry = Gtk.Entry()
         seed_entry.set_input_purpose(Gtk.InputPurpose.DIGITS)
@@ -185,12 +179,16 @@ class AiIntegration(Gimp.PlugIn):
         parameter_box.pack_start(seed_label, False, False, 0)
         parameter_box.pack_start(seed_entry, True, True, 0)
 
-        # Add checkbox for CPU usage for optimization
+        # Add checkbox for CPU usage for optimization and for preserving transparency
         performance_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
         performance_box.set_border_width(10)
 
         cpu_checkbox = Gtk.CheckButton.new_with_label("CPU Offloading")
+        transparency_checkbox = Gtk.CheckButton.new_with_label("Preserve Transparency")
+        transparency_checkbox.set_active(True)
+
         performance_box.pack_start(cpu_checkbox, False, False, 0)
+        performance_box.pack_start(transparency_checkbox, False, False, 0)
 
         dialog.get_content_area().add(text_input_box)
         dialog.get_content_area().add(negative_input_box)
@@ -282,10 +280,11 @@ class AiIntegration(Gimp.PlugIn):
                 Gimp.progress_end()
 
                 try:
-                    cr = inpaint.getpixel(reference_coords)
-                    cr_string = f"rgb({cr[0]}, {cr[1]}, {cr[2]})"
-                    Gimp.Image.select_color(image, Gimp.ChannelOps.REPLACE, inpaint_layer, Gimp.color_parse_css(cr_string))
-                    Gimp.Drawable.edit_clear(inpaint_layer)
+                    if transparency_checkbox.get_active():
+                        cr = inpaint.getpixel(reference_coords)
+                        cr_string = f"rgb({cr[0]}, {cr[1]}, {cr[2]})"
+                        Gimp.Image.select_color(image, Gimp.ChannelOps.REPLACE, inpaint_layer, Gimp.color_parse_css(cr_string))
+                        Gimp.Drawable.edit_clear(inpaint_layer)
                 except NameError:
                     pass
                 
