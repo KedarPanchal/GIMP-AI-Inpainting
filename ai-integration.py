@@ -4,6 +4,7 @@ import gi
 import time
 import os
 import random
+import json
 
 import torch
 import diffusers
@@ -122,14 +123,33 @@ class AiIntegration(Gimp.PlugIn):
         dialog.add_button("_Cancel", Gtk.ResponseType.CANCEL)
         dialog.add_button("_OK", Gtk.ResponseType.OK)
 
+        # Load existing config if it's there
+        if os.path.exists("config.json"):
+            with open("config.json", "r") as config:
+                parameters = json.load(config)
+        else: # Otherwise init a config dictionary with default values
+            parameters = {
+                "prompt": "",
+                "negative_prompt": "",
+                "steps": "10",
+                "cfg": "7.5",
+                "strength": "0.5",
+                "seed": f"{round(time.time())}",
+                "cpu": False,
+                "transparency": True
+            }
+
         # Add input for inpaint prompt
         text_input_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
         text_input_box.set_border_width(10)
         prompt_label = Gtk.Label(label="Prompt:")
         prompt_entry = Gtk.Entry()
         prompt_entry.set_placeholder_text("Enter prompt...")
+        prompt_entry.set_text(parameters["prompt"])
+
         text_input_box.pack_start(prompt_label, False, False, 0)
         text_input_box.pack_start(prompt_entry, True, True, 0)
+
 
         # Add input for negative inpaint prompt
         negative_input_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
@@ -137,6 +157,8 @@ class AiIntegration(Gimp.PlugIn):
         negative_prompt_label = Gtk.Label(label="Negative Prompt:")
         negative_prompt_entry = Gtk.Entry()
         negative_prompt_entry.set_placeholder_text("Enter negative prompt...")
+        negative_prompt_entry.set_text(parameters["negative_prompt"])
+
         negative_input_box.pack_start(negative_prompt_label, False, False, 0)
         negative_input_box.pack_start(negative_prompt_entry, True, True, 0)
 
@@ -148,24 +170,24 @@ class AiIntegration(Gimp.PlugIn):
         steps_entry = Gtk.Entry()
         steps_entry.set_input_purpose(Gtk.InputPurpose.DIGITS)
         steps_entry.set_width_chars(5)
-        steps_entry.set_text("10")
+        steps_entry.set_text(parameters["steps"])
 
         cfg_label = Gtk.Label(label="CFG:")
         cfg_entry = Gtk.Entry()
         cfg_entry.set_input_purpose(Gtk.InputPurpose.NUMBER)
         cfg_entry.set_width_chars(5)
-        cfg_entry.set_text("7.5")
+        cfg_entry.set_text(parameters["cfg"])
 
         strength_label = Gtk.Label(label="Strength:")
         strength_entry = Gtk.Entry()
         strength_entry.set_input_purpose(Gtk.InputPurpose.NUMBER)
         strength_entry.set_width_chars(5)
-        strength_entry.set_text("0.5")
+        strength_entry.set_text(parameters["strength"])
 
         seed_label = Gtk.Label(label="Seed:")
         seed_entry = Gtk.Entry()
         seed_entry.set_input_purpose(Gtk.InputPurpose.DIGITS)
-        seed_entry.set_text(f"{round(time.time())}")
+        seed_entry.set_text(parameters["seed"])
 
         parameter_box.pack_start(steps_label, False, False, 0)
         parameter_box.pack_start(steps_entry, False, False, 0)
@@ -184,10 +206,15 @@ class AiIntegration(Gimp.PlugIn):
         performance_box.set_border_width(10)
 
         cpu_checkbox = Gtk.CheckButton.new_with_label("CPU Offloading")
+        cpu_checkbox.set_active(parameters["cpu"])
+
+        config_checkbox = Gtk.CheckButton.new_with_label("Save configuration:")
+
         transparency_checkbox = Gtk.CheckButton.new_with_label("Preserve Transparency")
-        transparency_checkbox.set_active(True)
+        transparency_checkbox.set_active(parameters["transparency"])
 
         performance_box.pack_start(cpu_checkbox, False, False, 0)
+        performance_box.pack_start(config_checkbox, False, False, 0)
         performance_box.pack_start(transparency_checkbox, False, False, 0)
 
         dialog.get_content_area().add(text_input_box)
@@ -198,6 +225,24 @@ class AiIntegration(Gimp.PlugIn):
 
         response = dialog.run()
         if response == Gtk.ResponseType.OK:
+            if config_checkbox.get_active():
+                write_dict = {
+                    "prompt": prompt_entry.get_text(),
+                    "negative_prompt": negative_prompt_entry.get_text(),
+                    "steps": steps_entry.get_text(),
+                    "cfg": cfg_entry.get_text(),
+                    "strength": strength_entry.get_text(),
+                    "seed": seed_entry.get_text(),
+                    "cpu": cpu_checkbox.get_active(),
+                    "transparency": transparency_checkbox.get_active()
+                }
+
+                json_to_write = json.dumps(write_dict, indent=4)
+                with open("config.json", "w") as config:
+                    config.write(json_to_write)
+            elif os.path.exists("config.json"): # Delete config if the settings aren't set to save the config file
+                os.remove("config.json")
+
             # No selection :(
             if Gimp.Selection.is_empty(image):
                 dialog.destroy()
