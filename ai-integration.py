@@ -52,6 +52,10 @@ class AiIntegration(Gimp.PlugIn):
     """
     def find_color_not_in_image(self, image):
         colors = {color[1] for color in image.getcolors(maxcolors=image.size[0] * image.size[1])}
+
+        if len(colors) >= 255 ** 3:
+            raise ValueError("Too many colors in image!")
+
         while True:
             new_color = (
                 random.randint(0,255),
