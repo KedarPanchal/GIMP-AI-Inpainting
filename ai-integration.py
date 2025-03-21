@@ -43,8 +43,6 @@ class AiIntegration(Gimp.PlugIn):
         colors = [tuple(color) for color in pixels[y, x]]
         return list(zip(zip(x, y), colors))
 
-
-
     """This is a horrible, godawful way of fixing the issue of Stable Diffusion not liking transparent images.
        This bug has given me a lot of grief, which is why I'm typing up a comment to explain its madness.
        To fix the issue I use brute force to find a color that's not present in the image.
@@ -63,6 +61,17 @@ class AiIntegration(Gimp.PlugIn):
             )
             if new_color not in colors:
                 return new_color
+    
+    """Deletes all intermediate and temporary files used during the inpainting process, if they exist
+    """
+    def cleanup(self, fpath):
+        def delete_if_exists(name):
+            if os.path.exists(name):
+                os.remove(name)
+        
+        delete_if_exists(f"{fpath}.png")
+        delete_if_exists(f"{fpath}_mask.png")
+        delete_if_exists(f"{fpath}_inpaint.png")
 
     """The callback function used for updating the progress bar doesn't accept other parameters other than the ones provided in the documentation.
         In order to work around this to pass the total steps in the image as a parameter, a closure can be used that takes in the total steps parameter
@@ -341,9 +350,7 @@ class AiIntegration(Gimp.PlugIn):
                 Gimp.Selection.none(image)
 
                 # Delete all images used for inpainting process
-                os.remove(f"{save_path}.png")
-                os.remove(f"{save_path}_mask.png")
-                os.remove(f"{save_path}_inpaint.png")
+                self.cleanup(save_path)
                 dialog.destroy()
                 return procedure.new_return_values(Gimp.PDBStatusType.SUCCESS, GLib.Error())
 
