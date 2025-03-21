@@ -86,6 +86,8 @@ class AiIntegration(Gimp.PlugIn):
         6. Steps
     """
     def inpaint(self, image, mask, **args):
+        getter = lambda param, default: default if args[param] == "" else args[param]
+
         pipeline = diffusers.AutoPipelineForInpainting.from_pretrained("diffusers/stable-diffusion-xl-1.0-inpainting-0.1", torch_dtype=torch.float16, variant="fp16", safety_checker=None)
         
         # Check if GPU acceleration can be performed
@@ -103,15 +105,15 @@ class AiIntegration(Gimp.PlugIn):
         mask = mask.resize((1024, 1024))
         
         output_image = pipeline(
-            prompt=args.get("prompt", ""), 
-            negative_prompt=args.get("negative_prompt", ""), 
+            prompt=getter("prompt", ""), 
+            negative_prompt=getter("negative_prompt", ""), 
             image=image, 
             mask_image=mask, 
-            strength=float(args.get("strength", 0.5)), 
-            guidance_scale=float(args.get("cfg", 7.5)),
-            num_inference_steps=int(args.get("steps", 10)), 
-            generator=torch.Generator(device="mps").manual_seed(int(args.get("seed", 0))),
-            callback_on_step_end=AiIntegration.progress_bar_closure(float(args.get("steps", 10)) * float(args.get("strength", 0.5)))).images[0]
+            strength=float(getter("strength", 0.5)), 
+            guidance_scale=float(getter("cfg", 7.5)),
+            num_inference_steps=int(getter("steps", 10)), 
+            generator=torch.Generator(device="mps").manual_seed(int(getter("seed", 0))),
+            callback_on_step_end=AiIntegration.progress_bar_closure(float(getter("steps", 10)) * float(getter("strength", 0.5)))).images[0]
             
         # Resize back for good proportions    
         output_image = output_image.resize(old_size)
