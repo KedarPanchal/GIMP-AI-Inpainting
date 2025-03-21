@@ -289,7 +289,7 @@ class AiIntegration(Gimp.PlugIn):
                         Gimp.Item.set_visible(layer, False)
 
                 # Save image with only the selected layers
-                Gimp.Item.set_visible(drawables[0], True) # The earlier for loop sets the selected layer invisible, so we uninvisible it
+                Gimp.Item.set_visible(drawables[0], True) # The earlier for loop sets the selected layer invisible, so I uninvisible it
                 Gimp.file_save(Gimp.RunMode.NONINTERACTIVE, image, Gio.File.new_for_path(f"{save_path}.png"), None)
                 # Reset back to original state
                 for layer in Gimp.Image.get_layers(image):
