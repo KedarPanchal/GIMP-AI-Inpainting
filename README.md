@@ -53,7 +53,9 @@ To use the plug-in, first make a selection on the layer you wish to modify using
 * **CFG:** How strictly the AI model should adhere to your prompt and negative prompt. Higher values increase prompt adherance, but lower values allow for greater variety.
 * **Strength:** How much the AI model's generation should impact the original image. This value ranges from `0.0` to `1.0`.
 * **Seed:** A value that guides the AI generation process that controls what pseudo-random numbers the AI generates. Given all of the other parameters are the same, generating two images with the same seed yields the same output. Conversely, generating two images with different seeds yields different outputs. Seeds are generated automatically by the plug-in, but can be altered by users in the plug-in UI should they wish to.
-* **CPU Offloading:** When turned on, the CPU is utilized in conjunction with the GPU to perform the processes necessary for generating an image. This reduced the amount of VRAM used in the image generation process, but increases the generation time. On Apple Silicon devices with unified memory, this parameter has no impact.
+* **CPU Offloading:** When checked, the CPU is utilized in conjunction with the GPU to perform the processes necessary for generating an image. This reduced the amount of VRAM used in the image generation process, but increases the generation time. On Apple Silicon devices with unified memory, this parameter has no impact.
+* **Save Configuration:** When checked, saves all current parameters so that their values are loaded in the next time the user opens the plug-in. When unchecked, deletes the previous configuration so that the default values are loaded in the next time the plug-in is opened.
+* **Preserve Transparency:** The AI model used for the inpainting process cannot handle transparent images. To fix this, the plug-in fills transparent sections with a color not found in the image. If this parameter is checked, the plug-in reverts unmasked transparent pixels to their original colors and opacities in the AI-modified image before adding it to the GIMP project. If left unchecked, the plug-in leaves the added background color in to be manually removed later on. 
 
 After inputting values for each parameter, click the `OK` button to run the AI, or click the `CANCEL` button to exit the plug-in.
 
@@ -61,7 +63,7 @@ After inputting values for each parameter, click the `OK` button to run the AI, 
 * When using this plug-in for the first time, the generation may take longer than usual as the AI model is being downloaded from the internet.
 * If you encounter stutters or slow-downs during the generation process, be sure to close out any unused applications and/or ensure the `CPU Offloading` parameter is enabled in the plug-in UI.
     * This plug-in runs the AI model on your local machine, meaning that it is resource-intensive during the generation process. Stable Diffusion XL—the model used in this plug-in—is a hefty one, requiring at least 8GB of VRAM in conjunction with 12 GB of RAM, or at least 16GB of unified memory, to run smoothly.
-
+* The plug-in only preserves the transparency of unmasked transparent pixels, meaning that any transparent pixels (even partially transparent ones) within the masked area will still retain the added background color described earlier.
 ## Development Specifications
 ---
 [Back to top](#table-of-contents)  
