@@ -321,16 +321,17 @@ class AiIntegration(Gimp.PlugIn):
                     strength=strength_entry.get_text(),
                     cpu_offload=cpu_checkbox.get_active())
                 
-                # Save and insert inpainted image above the selected one
+                # Revert transparency of inpainted image
                 inpaint = inpaint.convert("RGBA")
                 try:
                     if transparency_checkbox.get_active():
                         for coord in reference_coords:
                             if mask.getpixel(coord[0]) != (255, 255, 255):
                                 inpaint.putpixel(coord[0], coord[1])
-                except NameError:
+                except NameError: # Just ignore the process if there was no transparency to fix in the first place
                     pass
-            
+                
+                # Save and insert the inpainted image above the selected layer
                 inpaint.save(f"{save_path}_inpaint.png")
                 inpaint_layer = Gimp.file_load_layer(Gimp.RunMode.NONINTERACTIVE, image, Gio.File.new_for_path(f"{save_path}_inpaint.png"))
                 Gimp.Item.set_name(inpaint_layer, f"{Gimp.Item.get_name(drawables[0])}_inpaint")
