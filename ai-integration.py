@@ -39,9 +39,10 @@ class AiIntegration(Gimp.PlugIn):
 
     def get_transparent_coords(self, image):
         pixels = np.array(image) 
-        transparents = np.column_stack(np.where(pixels[..., 3] == 0))
-        selection = transparents[random.randrange(transparents.shape[0])]
-        return (selection[1], selection[0])
+        y, x = np.where(pixels[..., 3] < 255)
+        colors = [tuple(color) for color in pixels[y, x]]
+        return list(zip(zip(x, y), colors))
+
 
 
     """This is a horrible, godawful way of fixing the issue of Stable Diffusion not liking transparent images.
@@ -319,20 +320,19 @@ class AiIntegration(Gimp.PlugIn):
                 
                 # Save and insert inpainted image above the selected one
                 inpaint = inpaint.convert("RGBA")
+                try:
+                    if transparency_checkbox.get_active():
+                        for coord in reference_coords:
+                            if mask.getpixel(coord[0]) != (255, 255, 255):
+                                inpaint.putpixel(coord[0], coord[1])
+                except NameError:
+                    pass
+            
                 inpaint.save(f"{save_path}_inpaint.png")
                 inpaint_layer = Gimp.file_load_layer(Gimp.RunMode.NONINTERACTIVE, image, Gio.File.new_for_path(f"{save_path}_inpaint.png"))
                 Gimp.Item.set_name(inpaint_layer, f"{Gimp.Item.get_name(drawables[0])}_inpaint")
                 Gimp.Image.insert_layer(image, inpaint_layer, None, Gimp.Image.get_layers(image).index(drawables[0]))
                 Gimp.progress_end()
-
-                try:
-                    if transparency_checkbox.get_active():
-                        cr = inpaint.getpixel(reference_coords)
-                        cr_string = f"rgb({cr[0]}, {cr[1]}, {cr[2]})"
-                        Gimp.Image.select_color(image, Gimp.ChannelOps.REPLACE, inpaint_layer, Gimp.color_parse_css(cr_string))
-                        Gimp.Drawable.edit_clear(inpaint_layer)
-                except NameError:
-                    pass
                 
                 Gimp.Selection.none(image)
 
