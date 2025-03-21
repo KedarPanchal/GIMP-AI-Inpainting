@@ -3,4 +3,5 @@ prompts.txt
 test.sh
 /*.xcf
 .DS_Store
+config.json
 !resources/*
