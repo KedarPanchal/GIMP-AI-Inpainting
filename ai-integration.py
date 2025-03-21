@@ -212,6 +212,7 @@ class AiIntegration(Gimp.PlugIn):
         cpu_checkbox.set_active(parameters["cpu"])
 
         config_checkbox = Gtk.CheckButton.new_with_label("Save configuration:")
+        config_checkbox.set_active(os.path.exists("config.json"))
 
         transparency_checkbox = Gtk.CheckButton.new_with_label("Preserve Transparency")
         transparency_checkbox.set_active(parameters["transparency"])
