@@ -166,7 +166,6 @@ class AiIntegration(Gimp.PlugIn):
         text_input_box.pack_start(prompt_label, False, False, 0)
         text_input_box.pack_start(prompt_entry, True, True, 0)
 
-
         # Add input for negative inpaint prompt
         negative_input_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
         negative_input_box.set_border_width(10)
@@ -284,7 +283,6 @@ class AiIntegration(Gimp.PlugIn):
                 if not Gimp.file_save(Gimp.RunMode.NONINTERACTIVE, image, Gio.File.new_for_path(f"{save_path}_mask.png"), None):
                     self.cleanup(save_path)
                     dialog.destroy()
-
                     return procedure.new_return_values(Gimp.PDBStatusType.EXECUTION_ERROR, GLib.Error(message="Unable to save image mask!"))
                 
                 # Undo all actions taken manually because undo groups aren't what I think they are
@@ -311,7 +309,6 @@ class AiIntegration(Gimp.PlugIn):
                 if not Gimp.file_save(Gimp.RunMode.NONINTERACTIVE, image, Gio.File.new_for_path(f"{save_path}.png"), None):
                     self.cleanup(save_path)
                     dialog.destroy()
-
                     return procedure.new_return_values(Gimp.PDBStatusType.EXECUTION_ERROR, GLib.Error(message="Unable to save image!"))
                 
                 # Reset back to original state
@@ -355,7 +352,6 @@ class AiIntegration(Gimp.PlugIn):
                 except Exception as e:
                     self.cleanup(save_path)
                     dialog.destroy()
-
                     return procedure.new_return_values(Gimp.PDBStatusType.EXECUTION_ERROR, GLib.Error(message=f"Exception occurred when inpainting image: {repr(e)}"))
                     
                 # Revert transparency of inpainted image
