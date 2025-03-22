@@ -281,7 +281,12 @@ class AiIntegration(Gimp.PlugIn):
                 
                 save_path = os.path.join(os.path.expanduser("~/Documents"), f"{fname}") # Save to Documents for now
 
-                Gimp.file_save(Gimp.RunMode.NONINTERACTIVE, image, Gio.File.new_for_path(f"{save_path}_mask.png"), None)
+                if not Gimp.file_save(Gimp.RunMode.NONINTERACTIVE, image, Gio.File.new_for_path(f"{save_path}_mask.png"), None):
+                    self.cleanup(save_path)
+                    dialog.destroy()
+
+                    return procedure.new_return_values(Gimp.PDBStatusType.EXECUTION_ERROR, GLib.Error(message="Unable to save image mask!"))
+                
                 # Undo all actions taken manually because undo groups aren't what I think they are
                 Gimp.Image.remove_layer(image, layer)
                 Gimp.Selection.invert(image)
@@ -303,7 +308,12 @@ class AiIntegration(Gimp.PlugIn):
 
                 # Save image with only the selected layers
                 Gimp.Item.set_visible(drawables[0], True) # The earlier for loop sets the selected layer invisible, so I uninvisible it
-                Gimp.file_save(Gimp.RunMode.NONINTERACTIVE, image, Gio.File.new_for_path(f"{save_path}.png"), None)
+                if not Gimp.file_save(Gimp.RunMode.NONINTERACTIVE, image, Gio.File.new_for_path(f"{save_path}.png"), None):
+                    self.cleanup(save_path)
+                    dialog.destroy()
+
+                    return procedure.new_return_values(Gimp.PDBStatusType.EXECUTION_ERROR, GLib.Error(message="Unable to save image!"))
+                
                 # Reset back to original state
                 for layer in Gimp.Image.get_layers(image):
                     if layer not in invisibles:
@@ -313,37 +323,48 @@ class AiIntegration(Gimp.PlugIn):
                 img = Image.open(f"{save_path}.png")
                 img = img.convert("RGBA") # Convert to RGBA to make things compatible with the color replacement code
 
-                if img.getextrema()[3][0] < 255: # Check if there is an alpha value that isn't fully opaque before color replacing
-                    reference_coords = self.get_transparent_coords(img)
-                    background_color = self.find_color_not_in_image(img) # Blow up computer with this atrocity
-                    background_image = Image.new("RGBA", img.size, background_color)
-                    img = Image.alpha_composite(background_image, img)
+                reference_coords = None
+                try:
+                    if img.getextrema()[3][0] < 255: # Check if there is an alpha value that isn't fully opaque before color replacing
+                        reference_coords = self.get_transparent_coords(img)
+                        background_color = self.find_color_not_in_image(img) # Blow up computer with this atrocity
+                        background_image = Image.new("RGBA", img.size, background_color)
+                        img = Image.alpha_composite(background_image, img)
+                except Exception as e:
+                    self.cleanup(save_path)
+                    dialog.destroy()
+
+                    return procedure.new_return_values(Gimp.PDBStatusType.CALLING_ERROR, GLib.Error(message=f"Exception occurred when correcting for transparency: {repr(e)}"))
 
                 img = img.convert("RGB") # Remove alpha channel
 
                 # Init progress bar and begin inpainting process
                 Gimp.progress_init("Generating inpainting...")
-                inpaint = self.inpaint(
-                    image=img, 
-                    mask=mask, 
-                    prompt=prompt_entry.get_text(), 
-                    negative_prompt=negative_prompt_entry.get_text(),
-                    steps=steps_entry.get_text(),
-                    cfg=cfg_entry.get_text(),
-                    seed=seed_entry.get_text(),
-                    strength=strength_entry.get_text(),
-                    cpu_offload=cpu_checkbox.get_active())
-                
+                inpaint = None
+                try:
+                    inpaint = self.inpaint(
+                        image=img, 
+                        mask=mask, 
+                        prompt=prompt_entry.get_text(), 
+                        negative_prompt=negative_prompt_entry.get_text(),
+                        steps=steps_entry.get_text(),
+                        cfg=cfg_entry.get_text(),
+                        seed=seed_entry.get_text(),
+                        strength=strength_entry.get_text(),
+                        cpu_offload=cpu_checkbox.get_active())
+                except Exception as e:
+                    self.cleanup(save_path)
+                    dialog.destroy()
+
+                    return procedure.new_return_values(Gimp.PDBStatusType.EXECUTION_ERROR, GLib.Error(message=f"Exception occurred when inpainting image: {repr(e)}"))
+                    
                 # Revert transparency of inpainted image
                 inpaint = inpaint.convert("RGBA")
-                try:
-                    if transparency_checkbox.get_active():
-                        for coord in reference_coords:
-                            if mask.getpixel(coord[0]) != (255, 255, 255):
-                                inpaint.putpixel(coord[0], coord[1])
-                except NameError: # Just ignore the process if there was no transparency to fix in the first place
-                    pass
-                
+                if reference_coords is not None and transparency_checkbox.get_active():
+                    for coord in reference_coords:
+                        if mask.getpixel(coord[0]) != (255, 255, 255):
+                            inpaint.putpixel(coord[0], coord[1])
+
                 # Save and insert the inpainted image above the selected layer
                 inpaint.save(f"{save_path}_inpaint.png")
                 inpaint_layer = Gimp.file_load_layer(Gimp.RunMode.NONINTERACTIVE, image, Gio.File.new_for_path(f"{save_path}_inpaint.png"))
